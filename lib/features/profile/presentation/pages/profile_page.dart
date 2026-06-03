@@ -108,7 +108,7 @@ class ProfilePage extends ConsumerWidget {
           _buildDivider(),
           _buildMenuItem(Icons.account_balance_wallet_outlined, 'Manajemen Akun', Colors.teal, false, onTap: () => context.push('/account_management')),
           _buildDivider(),
-          _buildMenuItem(Icons.storage_outlined, 'Database Inspector', Colors.orange, false, onTap: () => context.push('/debug_db')),
+          _buildMenuItem(Icons.storage_outlined, 'Database Inspector', Colors.teal, false, onTap: () => context.push('/debug_db')),
           _buildDivider(),
           _buildMenuItem(
             Icons.logout, 
@@ -117,6 +117,7 @@ class ProfilePage extends ConsumerWidget {
             true, 
             onTap: () async {
               await ref.read(authRepositoryProvider).logout();
+              ref.read(currentUserProvider.notifier).state = null;
               if (context.mounted) {
                 context.go('/welcome');
               }

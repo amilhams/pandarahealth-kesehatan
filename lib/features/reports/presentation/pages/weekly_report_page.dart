@@ -45,11 +45,25 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       return FileImage(File(pic));
     }
     return const NetworkImage(
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200');
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
+    );
   }
 
   String _fmtRange(DateTime s, DateTime e) {
-    const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const m = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     if (s.month == e.month && s.year == e.year) {
       return '${s.day} – ${e.day} ${m[e.month - 1]} ${e.year}';
     }
@@ -59,11 +73,21 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
   int _getDataDaysCount(HealthRepository repo) {
     final all = <String>{};
     String key(DateTime d) => '${d.year}-${d.month}-${d.day}';
-    for (final v in Hive.box<VitalsRecord>('vitals_box').values) { all.add(key(v.date)); }
-    for (final m in repo.getAllMoods()) { all.add(key(m.date)); }
-    for (final s in repo.getAllSleep()) { all.add(key(s.date)); }
-    for (final n in Hive.box<NutritionRecord>('nutrition_box').values) { all.add(key(n.date)); }
-    for (final sym in Hive.box<SymptomRecord>('symptom_box').values) { all.add(key(sym.date)); }
+    for (final v in Hive.box<VitalsRecord>('vitals_box').values) {
+      all.add(key(v.date));
+    }
+    for (final m in repo.getAllMoods()) {
+      all.add(key(m.date));
+    }
+    for (final s in repo.getAllSleep()) {
+      all.add(key(s.date));
+    }
+    for (final n in Hive.box<NutritionRecord>('nutrition_box').values) {
+      all.add(key(n.date));
+    }
+    for (final sym in Hive.box<SymptomRecord>('symptom_box').values) {
+      all.add(key(sym.date));
+    }
     return all.isEmpty ? 0 : all.length;
   }
 
@@ -88,19 +112,16 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
     final days = _getDataDaysCount(repo);
 
     final start = _selected.start;
-    final end   = _selected.end;
+    final end = _selected.end;
 
-    // Kode seeder dinonaktifkan sesuai permintaan (jangan dihapus)
-    // final reportService = ref.watch(reportServiceProvider);
-    // final report = reportService.getReportForDate(start);
-
-    final sleeps    = repo.getSleepByRange(start, end);
-    final moods     = repo.getMoodsByRange(start, end);
-    final vitals    = repo.getVitalsByRange(start, end);
+    final sleeps = repo.getSleepByRange(start, end);
+    final moods = repo.getMoodsByRange(start, end);
+    final vitals = repo.getVitalsByRange(start, end);
     final nutrition = repo.getNutritionByRange(start, end);
-    final symptoms  = repo.getSymptomsByRange(start, end);
+    final symptoms = repo.getSymptomsByRange(start, end);
 
-    final latestVital = vitals.isNotEmpty ? vitals.last : repo.getLatestVitals();
+    // PERBAIKAN 1: Mengubah logika agar dinamis murni mengikuti filter kalender berjalan
+    final latestVital = vitals.isNotEmpty ? vitals.last : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7FBFB),
@@ -116,7 +137,10 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                 children: [
                   GestureDetector(
                     onTap: () => context.go('/dashboard'),
-                    child: Image.asset('assets/images/logo_health_fix.png', height: 32),
+                    child: Image.asset(
+                      'assets/images/logo_health_fix.png',
+                      height: 32,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () => context.go('/profile'),
@@ -138,7 +162,10 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                   children: [
                     const Text(
                       'Laporan Mingguan',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
 
@@ -178,16 +205,25 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.primary),
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               _selected.label,
@@ -198,7 +234,11 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.keyboard_arrow_down, color: AppColors.primary, size: 16),
+                            const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: AppColors.primary,
+                              size: 16,
+                            ),
                           ],
                         ),
                       ),
@@ -207,7 +247,7 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                     const SizedBox(height: 20),
 
                     // ── New User Banner ─────────────────────────────────────
-                    if (days < 7) ...[
+                    if (days > 0 && days < 7) ...[
                       Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 20),
@@ -220,14 +260,20 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 22),
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              color: Colors.orange,
+                              size: 22,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                days == 0
-                                    ? 'Belum ada data tersimpan. Mulai catat kesehatanmu via menu Tracker.'
-                                    : 'Periode laporan hanya tersedia dalam format mingguan. Berikut adalah ringkasan data Anda selama $days hari terakhir. Ringkasan penuh akan tersedia setelah pengisian mencapai satu minggu.',
-                                style: const TextStyle(color: Color(0xFFD84315), fontSize: 12, height: 1.4),
+                                'Periode laporan hanya tersedia dalam format mingguan. Berikut adalah ringkasan data Anda selama $days hari terakhir. Ringkasan penuh akan tersedia setelah pengisian mencapai satu minggu.',
+                                style: const TextStyle(
+                                  color: Color(0xFFD84315),
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ],
@@ -295,8 +341,13 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                 child: Icon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 10),
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -317,29 +368,37 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
   }
 
   Widget _sleepContent(List<SleepRecord> sleeps) {
-    final avgHours = sleeps.isEmpty ? 0.0 : sleeps.fold(0.0, (s, r) => s + r.hours) / sleeps.length;
+    final avgHours = sleeps.isEmpty
+        ? 0.0
+        : sleeps.fold(0.0, (s, r) => s + r.hours) / sleeps.length;
     final h = avgHours.floor();
     final m = ((avgHours - h) * 60).round();
 
-    // Quality distribution
     final qualityCount = <String, int>{};
     for (final s in sleeps) {
       qualityCount[s.quality] = (qualityCount[s.quality] ?? 0) + 1;
     }
-    final dominantQ = sleeps.isEmpty ? '0' : qualityCount.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    final dominantQ = sleeps.isEmpty
+        ? '0'
+        : qualityCount.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 
-    // Dynamic summary
     String summary;
     if (sleeps.isEmpty) {
-      summary = 'Belum ada catatan jadwal tidur Anda di periode ini. Silakan catat tidur harian Anda.';
-    } else if (avgHours >= 7 && (dominantQ == 'Baik' || dominantQ == 'Nyenyak')) {
-      summary = 'Berdasarkan catatan jadwal tidur Anda di periode ini, kualitas dan durasi tidur terpantau sangat baik.';
+      summary =
+          'Belum ada catatan jadwal tidur Anda di periode ini. Silakan catat tidur harian Anda.';
+    } else if (avgHours >= 7 &&
+        (dominantQ == 'Baik' || dominantQ == 'Nyenyak')) {
+      summary =
+          'Berdasarkan catatan jadwal tidur Anda di periode ini, kualitas dan durasi tidur terpantau sangat baik.';
     } else if (avgHours < 5) {
-      summary = 'Durasi tidur rata-rata Anda di periode ini cukup singkat. Usahakan tidur minimal 7 jam per malam untuk pemulihan optimal.';
+      summary =
+          'Durasi tidur rata-rata Anda di periode ini cukup singkat. Usahakan tidur minimal 7 jam per malam untuk pemulihan optimal.';
     } else if (dominantQ == 'Buruk' || dominantQ == 'Kurang') {
-      summary = 'Kualitas tidur Anda dominan "$dominantQ" pada periode ini. Pertimbangkan untuk menjaga konsistensi jam tidur dan bangun.';
+      summary =
+          'Kualitas tidur Anda dominan "$dominantQ" pada periode ini. Pertimbangkan untuk menjaga konsistensi jam tidur dan bangun.';
     } else {
-      summary = 'Rata-rata tidur Anda ${h}j ${m}m per malam dengan kualitas $dominantQ. Pertahankan kebiasaan ini.';
+      summary =
+          'Rata-rata tidur Anda ${h}j ${m}m per malam dengan kualitas $dominantQ. Pertahankan kebiasaan ini.';
     }
 
     return Column(
@@ -347,15 +406,22 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       children: [
         Row(
           children: [
-            Text('${h}j ${m}m',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.indigo)),
+            Text(
+              '${h}j ${m}m',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo,
+              ),
+            ),
             const SizedBox(width: 8),
-            const Text('rata-rata / malam',
-                style: TextStyle(color: Colors.black38, fontSize: 12)),
+            const Text(
+              'rata-rata / malam',
+              style: TextStyle(color: Colors.black38, fontSize: 12),
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        // Mini bar chart
         if (sleeps.isNotEmpty) ...[
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -375,8 +441,13 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('${s.hours.toStringAsFixed(0)}j',
-                        style: const TextStyle(fontSize: 9, color: Colors.black38)),
+                    Text(
+                      '${s.hours.toStringAsFixed(0)}j',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.black38,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -384,24 +455,35 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
           ),
           const SizedBox(height: 12),
         ],
-        // Quality chips
         if (sleeps.isNotEmpty) ...[
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: qualityCount.entries.map((e) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.indigo.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('${e.key} (${e.value}x)',
-                  style: const TextStyle(fontSize: 11, color: Colors.indigo, fontWeight: FontWeight.w600)),
-            )).toList(),
+            children: qualityCount.entries
+                .map(
+                  (e) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${e.key} (${e.value}x)',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 12),
         ],
-        // Kualitas tidur label
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -409,15 +491,24 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
             color: Colors.indigo.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(summary,
-              style: const TextStyle(color: Color(0xFF3949AB), fontSize: 12, height: 1.5)),
+          child: Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF3949AB),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  // ── 2. Vitals (SpO2) ─────────────────────────────────────────────────────
-  Widget _buildVitalsCard(VitalsRecord? latest, List<VitalsRecord> periodVitals) {
+  // ── 2. Vitals ─────────────────────────────────────────────────────────────
+  Widget _buildVitalsCard(
+    VitalsRecord? latest,
+    List<VitalsRecord> periodVitals,
+  ) {
     return _sectionCard(
       icon: Icons.monitor_heart_outlined,
       color: Colors.redAccent,
@@ -452,14 +543,23 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       case 'HR':
         infoBox = _buildVitalInfoBox(
           title: 'Detak Jantung (Heart Rate)',
-          subtitle: 'Frekuensi detak jantung per menit (BPM) diukur saat istirahat.',
+          subtitle:
+              'Frekuensi detak jantung per menit (BPM) diukur saat istirahat.',
           color: Colors.redAccent,
           icon: Icons.favorite,
           currentValue: hrVal,
           ranges: [
-            _VitalRangeItem('Lambat (Bradycardia / Buruk)', '< 60 BPM', Colors.orange),
+            _VitalRangeItem(
+              'Lambat (Bradycardia / Buruk)',
+              '< 60 BPM',
+              Colors.orange,
+            ),
             _VitalRangeItem('Normal (Ideal)', '60 - 100 BPM', Colors.green),
-            _VitalRangeItem('Cepat (Tachycardia / Intens)', '> 100 BPM', Colors.red),
+            _VitalRangeItem(
+              'Cepat (Tachycardia / Intens)',
+              '> 100 BPM',
+              Colors.red,
+            ),
           ],
         );
         break;
@@ -496,14 +596,23 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       default:
         infoBox = _buildVitalInfoBox(
           title: 'Saturasi Oksigen (SpO2)',
-          subtitle: 'Persentase hemoglobin yang membawa oksigen di dalam darah.',
+          subtitle:
+              'Persentase hemoglobin yang membawa oksigen di dalam darah.',
           color: Colors.blue,
           icon: Icons.air,
           currentValue: spo2Val,
           ranges: [
             _VitalRangeItem('Normal / Sehat', '95% - 100%', Colors.green),
-            _VitalRangeItem('Rendah (Hypoxia Ringan)', '90% - 94%', Colors.orange),
-            _VitalRangeItem('Sangat Rendah (Hypoxia Berat)', '< 90%', Colors.red),
+            _VitalRangeItem(
+              'Rendah (Hypoxia Ringan)',
+              '90% - 94%',
+              Colors.orange,
+            ),
+            _VitalRangeItem(
+              'Sangat Rendah (Hypoxia Berat)',
+              '< 90%',
+              Colors.red,
+            ),
           ],
         );
         break;
@@ -514,21 +623,49 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       children: [
         Row(
           children: [
-            _vitalChip(Icons.favorite, hrVal, 'Detak Jantung', Colors.redAccent, _selectedVital == 'HR', () {
-              setState(() => _selectedVital = 'HR');
-            }),
+            _vitalChip(
+              Icons.favorite,
+              hrVal,
+              'Detak Jantung',
+              Colors.redAccent,
+              _selectedVital == 'HR',
+              () {
+                setState(() => _selectedVital = 'HR');
+              },
+            ),
             const SizedBox(width: 8),
-            _vitalChip(Icons.directions_walk, stepsVal, 'Langkah', Colors.teal, _selectedVital == 'STEPS', () {
-              setState(() => _selectedVital = 'STEPS');
-            }),
+            _vitalChip(
+              Icons.directions_walk,
+              stepsVal,
+              'Langkah',
+              Colors.teal,
+              _selectedVital == 'STEPS',
+              () {
+                setState(() => _selectedVital = 'STEPS');
+              },
+            ),
             const SizedBox(width: 8),
-            _vitalChip(Icons.monitor_weight_outlined, bmiVal, 'BMI', Colors.purple, _selectedVital == 'BMI', () {
-              setState(() => _selectedVital = 'BMI');
-            }),
+            _vitalChip(
+              Icons.monitor_weight_outlined,
+              bmiVal,
+              'BMI',
+              Colors.purple,
+              _selectedVital == 'BMI',
+              () {
+                setState(() => _selectedVital = 'BMI');
+              },
+            ),
             const SizedBox(width: 8),
-            _vitalChip(Icons.air, spo2Val, 'SpO2', Colors.blue, _selectedVital == 'SPO2', () {
-              setState(() => _selectedVital = 'SPO2');
-            }),
+            _vitalChip(
+              Icons.air,
+              spo2Val,
+              'SpO2',
+              Colors.blue,
+              _selectedVital == 'SPO2',
+              () {
+                setState(() => _selectedVital = 'SPO2');
+              },
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -537,7 +674,14 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
     );
   }
 
-  Widget _vitalChip(IconData icon, String value, String label, Color color, bool isSelected, VoidCallback onTap) {
+  Widget _vitalChip(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -545,7 +689,9 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.18) : color.withValues(alpha: 0.07),
+            color: isSelected
+                ? color.withValues(alpha: 0.18)
+                : color.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected ? color : Colors.transparent,
@@ -556,11 +702,20 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
             children: [
               Icon(icon, color: color, size: 18),
               const SizedBox(height: 4),
-              Text(value,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-              Text(label, style: const TextStyle(color: Colors.black38, fontSize: 9)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.black38, fontSize: 9),
+              ),
             ],
           ),
         ),
@@ -613,7 +768,10 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: Colors.black54, fontSize: 11),
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -623,35 +781,51 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
           const Divider(height: 24, thickness: 0.8),
           const Text(
             'Panduan Parameter (Standar Internasional):',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
-          ...ranges.map((r) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: r.color,
-                        shape: BoxShape.circle,
+          ...ranges.map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: r.color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        r.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    r.range,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: r.color,
                     ),
-                    const SizedBox(width: 8),
-                    Text(r.label, style: const TextStyle(fontSize: 12, color: Colors.black87)),
-                  ],
-                ),
-                Text(
-                  r.range,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: r.color),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -668,45 +842,59 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
   }
 
   Widget _nutritionContent(List<NutritionRecord> records) {
-    final totalCal  = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.calories);
-    final totalProt = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.protein);
-    final totalCarb = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.carbs);
-    final totalFat  = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.fat);
+    final totalCal = records.isEmpty
+        ? 0
+        : records.fold(0, (s, n) => s + n.calories);
+    final totalProt = records.isEmpty
+        ? 0
+        : records.fold(0, (s, n) => s + n.protein);
+    final totalCarb = records.isEmpty
+        ? 0
+        : records.fold(0, (s, n) => s + n.carbs);
+    final totalFat = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.fat);
 
-    // Dynamic summary
     String summary;
     if (records.isEmpty) {
       summary = 'Belum ada catatan data nutrisi Anda pada periode ini.';
     } else if (totalProt > 50 && totalFat < 80) {
-      summary = 'Selama periode ini, Anda telah mengonsumsi total $totalCal kalori. Asupan protein harian tercukupi dengan baik, dan konsumsi lemak masih dalam batas wajar.';
+      summary =
+          'Selama periode ini, Anda telah mengonsumsi total $totalCal kalori. Asupan protein harian tercukupi dengan baik, dan konsumsi lemak masih dalam batas wajar.';
     } else if (totalFat >= 80) {
-      summary = 'Selama periode ini, Anda telah mengonsumsi total $totalCal kalori. Asupan protein harian tercukupi, namun perhatikan kembali batas konsumsi lemak Anda yang mencapai ${totalFat}g.';
+      summary =
+          'Selama periode ini, Anda telah mengonsumsi total $totalCal kalori. Asupan protein harian tercukupi, namun perhatikan kembali batas konsumsi lemak Anda yang mencapai ${totalFat}g.';
     } else if (totalProt < 30) {
-      summary = 'Total $totalCal kalori tercatat di periode ini. Asupan protein perlu ditingkatkan — pastikan cukup sumber protein seperti daging, telur, atau kacang-kacangan.';
+      summary =
+          'Total $totalCal kalori tercatat di periode ini. Asupan protein perlu ditingkatkan — pastikan cukup sumber protein seperti daging, telur, atau kacang-kacangan.';
     } else {
-      summary = 'Total $totalCal kalori tercatat pada periode ini. Pantau terus keseimbangan makronutrisi untuk menjaga energi optimal.';
+      summary =
+          'Total $totalCal kalori tercatat pada periode ini. Pantau terus keseimbangan makronutrisi untuk menjaga energi optimal.';
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Total calorie display
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               '$totalCal',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.green),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
             ),
             const SizedBox(width: 6),
             const Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: Text('kalori total', style: TextStyle(color: Colors.black38, fontSize: 12)),
+              child: Text(
+                'kalori total',
+                style: TextStyle(color: Colors.black38, fontSize: 12),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 14),
-        // Macro chips
         Row(
           children: [
             _macroChip('Protein', totalProt, Colors.redAccent),
@@ -717,7 +905,6 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
           ],
         ),
         const SizedBox(height: 14),
-        // Summary
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -725,12 +912,20 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
             color: Colors.green.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(summary,
-              style: const TextStyle(color: Color(0xFF1B5E20), fontSize: 12, height: 1.5)),
+          child: Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF1B5E20),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
         ),
         const SizedBox(height: 8),
-        Text('${records.length} entri makanan tercatat',
-            style: const TextStyle(color: Colors.black38, fontSize: 12)),
+        Text(
+          '${records.length} entri makanan tercatat',
+          style: const TextStyle(color: Colors.black38, fontSize: 12),
+        ),
       ],
     );
   }
@@ -745,9 +940,18 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
         ),
         child: Column(
           children: [
-            Text('${value}g',
-                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 14)),
-            Text(label, style: const TextStyle(color: Colors.black38, fontSize: 10)),
+            Text(
+              '${value}g',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.black38, fontSize: 10),
+            ),
           ],
         ),
       ),
@@ -765,27 +969,45 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
   }
 
   Widget _moodContent(List<MoodRecord> moods) {
-    const emojis = {'Angry': '😠', 'Sad': '😔', 'Neutral': '😐', 'Happy': '😊', 'Great': '🤩'};
+    const emojis = {
+      'Angry': '😠',
+      'Sad': '😔',
+      'Neutral': '😐',
+      'Happy': '😊',
+      'Great': '🤩',
+    };
     final count = <String, int>{};
     for (final m in moods) {
       count[m.mood] = (count[m.mood] ?? 0) + 1;
     }
-    final dominant = moods.isEmpty ? 'Neutral' : count.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    final dominant = moods.isEmpty
+        ? 'Neutral'
+        : count.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(emojis[dominant] ?? '😐', style: const TextStyle(fontSize: 36)),
+            Text(
+              emojis[dominant] ?? '😐',
+              style: const TextStyle(fontSize: 36),
+            ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(moods.isEmpty ? 'Belum ada data' : 'Dominan: $dominant',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text('${moods.length} catatan pada periode ini',
-                    style: const TextStyle(color: Colors.black38, fontSize: 12)),
+                Text(
+                  moods.isEmpty ? 'Belum ada data' : 'Dominan: $dominant',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  '${moods.length} catatan pada periode ini',
+                  style: const TextStyle(color: Colors.black38, fontSize: 12),
+                ),
               ],
             ),
           ],
@@ -795,16 +1017,29 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: count.entries.map((e) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('${emojis[e.key] ?? ''} ${e.key} (${e.value}x)',
-                  style: const TextStyle(fontSize: 11)),
-            )).toList(),
+            children: count.entries
+                .map(
+                  (e) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${emojis[e.key] ?? ''} ${e.key} (${e.value}x)',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
+
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: Colors.black12),
+          const SizedBox(height: 14),
         ],
       ],
     );
@@ -821,18 +1056,25 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
   }
 
   Widget _symptomsContent(List<SymptomRecord> symptoms) {
-    final standardSymptoms = ['Sakit Kepala', 'Demam', 'Batuk', 'Mual', 'Alergi', 'Kelelahan'];
-    
-    // Aggregate all symptom severities
+    final standardSymptoms = [
+      'Sakit Kepala',
+      'Demam',
+      'Batuk',
+      'Mual',
+      'Alergi',
+      'Kelelahan',
+    ];
+
     final agg = <String, List<double>>{};
     for (final rec in symptoms) {
       rec.symptoms.forEach((name, sev) {
         agg.putIfAbsent(name, () => []).add(sev);
       });
     }
-    final avgSev = agg.map((k, v) => MapEntry(k, v.reduce((a, b) => a + b) / v.length));
+    final avgSev = agg.map(
+      (k, v) => MapEntry(k, v.reduce((a, b) => a + b) / v.length),
+    );
 
-    // Sort standardSymptoms descending by severity value
     final sortedSymptoms = List<String>.from(standardSymptoms)
       ..sort((a, b) {
         final sevA = avgSev[a] ?? 0.0;
@@ -845,7 +1087,11 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
       runSpacing: 8,
       children: sortedSymptoms.map((name) {
         final severity = avgSev[name] ?? 0.0;
-        final color = severity >= 7 ? Colors.red : (severity >= 4 ? Colors.orange : (severity > 0 ? Colors.teal : Colors.black26));
+        final color = severity >= 7
+            ? Colors.red
+            : (severity >= 4
+                  ? Colors.orange
+                  : (severity > 0 ? Colors.teal : Colors.black26));
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
@@ -854,8 +1100,12 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
             border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Text(
-            '$name  ${severity > 0 ? severity.toStringAsFixed(1) : '0'}/10',
-            style: TextStyle(fontSize: 12, color: severity > 0 ? color : Colors.black38, fontWeight: FontWeight.w600),
+            '$name   ${severity > 0 ? severity.toStringAsFixed(1) : '0'}/10',
+            style: TextStyle(
+              fontSize: 12,
+              color: severity > 0 ? color : Colors.black38,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         );
       }).toList(),

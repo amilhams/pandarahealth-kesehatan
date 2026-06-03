@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Ditambahkan untuk menangkap FirebaseAuthException
 import '../../../../core/widgets/app_bottom_nav.dart';
 
 class ChangePasswordPage extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   bool _showCurrent = false;
   bool _showNew = false;
   bool _showConfirm = false;
+  bool _isLoading = false;
 
   late TextEditingController _currentPasswordController;
   late TextEditingController _newPasswordController;
@@ -87,17 +89,63 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
       return;
     }
 
-    await authRepo.updatePassword(newPassword);
-    ref.read(currentUserProvider.notifier).state = authRepo.getCurrentUser();
+    setState(() => _isLoading = true);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kata sandi berhasil diperbarui!'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
-      context.pop();
+    // TC-ACC-05: Penanganan Error & Keamanan Perubahan Password
+    try {
+      // Eksekusi pembaruan password
+      await authRepo.updatePassword(newPassword);
+
+      // Jika berhasil tanpa lemparan error, perbarui state provider UI
+      ref.read(currentUserProvider.notifier).state = authRepo.getCurrentUser();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kata sandi berhasil diperbarui!'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        context.pop();
+      }
+    } on FirebaseAuthException catch (e) {
+      // Menangkap error spesifik dari Firebase Auth dan menerjemahkannya ke Bahasa Indonesia
+      String errorMessage = 'Gagal memperbarui kata sandi. Silakan coba lagi.';
+
+      if (e.code == 'requires-recent-login') {
+        errorMessage =
+            'Sesi Anda telah berakhir demi keamanan. Silakan keluar (logout) dan masuk kembali sebelum mengubah kata sandi.';
+      } else if (e.code == 'weak-password') {
+        errorMessage =
+            'Kata sandi yang Anda masukkan terlalu lemah atau mudah ditebak.';
+      } else if (e.code == 'user-token-expired') {
+        errorMessage = 'Autentikasi Anda kedaluwarsa. Silakan masuk kembali.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      // Menangkap error umum/koneksi lainnya
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Terjadi kesalahan koneksi atau sistem. Silakan coba beberapa saat lagi.',
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -374,24 +422,33 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
 
   Widget _buildActionButton() {
     return ElevatedButton(
-      onPressed: _updatePassword,
+      onPressed: _isLoading ? null : _updatePassword,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Perbarui Kata Sandi',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          SizedBox(width: 8),
-          Icon(Icons.arrow_forward, size: 18),
-        ],
-      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Perbarui Kata Sandi',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, size: 18),
+              ],
+            ),
     );
   }
 }

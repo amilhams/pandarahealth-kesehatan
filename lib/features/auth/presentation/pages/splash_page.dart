@@ -54,60 +54,92 @@ class _SplashPageState extends ConsumerState<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(flex: 3),
-            // Logo
-            Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.white12,
-                shape: BoxShape.circle,
-              ),
-
-              child: Image.asset(
-                'assets/images/logo pandara health - panda.png',
-              ),
-            ),
-            const SizedBox(height: 48),
-            // App Name & Tagline
-            Image.asset('assets/images/logo pandara health putih.png'),
-            const Spacer(flex: 2),
-            // Loading Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 80),
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: _progressAnimation.value,
-                      backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.white,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primary, Color(0xFF00695C)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 3),
+              // Animating Logo
+              AnimatedBuilder(
+                animation: _progressAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _progressAnimation.value.clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: 0.8 + (_progressAnimation.value * 0.2),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    color: Colors.white10,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
                       ),
-                      minHeight: 6,
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'INITIALIZING WELLNESS',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.white,
-                      letterSpacing: 2.0,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Image.asset(
+                    'assets/images/logo pandara health - panda.png',
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 60),
-          ],
+              const SizedBox(height: 48),
+              // App Name & Tagline
+              Opacity(
+                opacity: _progressAnimation.value.clamp(0.0, 1.0),
+                child: Image.asset(
+                  'assets/images/logo pandara health putih.png',
+                  width: 280,
+                ),
+              ),
+              const Spacer(flex: 2),
+              // Loading Bar & Status
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 80),
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: _progressAnimation.value,
+                        backgroundColor: Colors.white12,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppColors.white,
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'INITIALIZING WELLNESS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white70,
+                        letterSpacing: 3.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 60),
+            ],
+          ),
         ),
       ),
     );

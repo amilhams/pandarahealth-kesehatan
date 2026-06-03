@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
+import 'package:pandara_health/core/data/repositories/health_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -19,16 +21,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoading = false;
 
   Future<void> _login() async {
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+    final emailText = _emailController.text.trim();
+    final passwordText = _passwordController.text;
+
+    if (emailText.isEmpty || passwordText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email dan kata sandi harus diisi')),
+        const SnackBar(
+          content: Text('Email dan kata sandi harus diisi'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
 
     if (!_isAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anda harus menyetujui Syarat & Ketentuan')),
+        const SnackBar(
+          content: Text('Anda harus menyetujui Syarat & Ketentuan'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -37,21 +48,73 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     try {
       final repository = ref.read(authRepositoryProvider);
-      final user = await repository.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      final user = await repository.login(emailText, passwordText);
 
       if (user != null) {
+        ref.read(currentUserProvider.notifier).state = user;
+        try {
+          final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+          if (firebaseUid != null) {
+            await ref
+                .read(healthRepositoryProvider)
+                .syncFromFirestore(firebaseUid);
+          }
+        } catch (e) {
+          debugPrint("Failed to sync on login: $e");
+        }
         if (mounted) {
           context.go('/dashboard');
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email atau kata sandi salah')),
+            const SnackBar(
+              content: Text(
+                'Login gagal. Periksa kembali email dan kata sandi Anda.',
+              ),
+              backgroundColor: Colors.redAccent,
+            ),
           );
         }
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Login gagal. Silakan periksa data Anda.';
+
+      // Implementasi Penerjemahan Kode Error Firebase Auth ke Bahasa Indonesia
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = 'Email atau kata sandi yang Anda masukkan salah';
+      } else if (e.code == 'invalid-email') {
+        message = 'Format email tidak valid';
+      } else if (e.code == 'user-disabled') {
+        message = 'Akun ini telah dinonaktifkan';
+      } else if (e.code == 'too-many-requests') {
+        message =
+            'Terlalu banyak percobaan masuk yang gagal. Silakan coba beberapa saat lagi.';
+      } else if (e.code == 'network-request-failed') {
+        message =
+            'Koneksi jaringan gagal. Periksa kembali sambungan internet Anda.';
+      } else if (e.code == 'operation-not-allowed') {
+        message =
+            'Autentikasi Email/Password belum diaktifkan di Firebase Console.';
+      } else if (e.message != null) {
+        message = e.message!;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -129,7 +192,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'Kata Sandi',
@@ -141,7 +205,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                                   GestureDetector(
                                     onTap: () {
-                                      // Handle forgot password
+                                      // Handle lupa kata sandi jika dibutuhkan
                                     },
                                     child: const Text(
                                       'Lupa Kata Sandi?',
@@ -160,14 +224,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 obscureText: !_isPasswordVisible,
                                 decoration: InputDecoration(
                                   hintText: '........',
-                                  hintStyle: const TextStyle(color: Colors.black26),
-                                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.black26),
+                                  hintStyle: const TextStyle(
+                                    color: Colors.black26,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline,
+                                    color: Colors.black26,
+                                  ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                      _isPasswordVisible
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
                                       color: Colors.black26,
                                     ),
-                                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                                    onPressed: () => setState(
+                                      () => _isPasswordVisible =
+                                          !_isPasswordVisible,
+                                    ),
                                   ),
                                   filled: true,
                                   fillColor: const Color(0xFFF1F5F5),
@@ -184,7 +258,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             children: [
                               Checkbox(
                                 value: _isAgreed,
-                                onChanged: (val) => setState(() => _isAgreed = val!),
+                                onChanged: (val) =>
+                                    setState(() => _isAgreed = val!),
                                 activeColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
@@ -193,7 +268,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               const Expanded(
                                 child: Text(
                                   'Saya setuju dengan Syarat & Ketentuan serta Kebijakan Privasi Pandara Health',
-                                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
                                 ),
                               ),
                             ],
@@ -209,14 +287,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ),
                             ),
                             child: _isLoading
-                                ? SizedBox(
+                                ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'Masuk',
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
                           ),
                           const SizedBox(height: 24),
@@ -224,7 +309,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: GestureDetector(
                               onTap: () => context.push('/register'),
                               child: RichText(
-                                text: TextSpan(
+                                text: const TextSpan(
                                   text: 'Tidak punya akun? ',
                                   style: TextStyle(color: Colors.black54),
                                   children: [

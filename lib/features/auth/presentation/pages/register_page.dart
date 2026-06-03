@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -17,7 +18,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _isAgreed = false;
-
   bool _isLoading = false;
 
   Future<void> _register() async {
@@ -28,21 +28,30 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua field harus diisi')),
+        const SnackBar(
+          content: Text('Semua field harus diisi'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
 
     if (password != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Konfirmasi kata sandi tidak cocok')),
+        const SnackBar(
+          content: Text('Konfirmasi kata sandi tidak cocok'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
 
     if (!_isAgreed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anda harus menyetujui Syarat & Ketentuan')),
+        const SnackBar(
+          content: Text('Anda harus menyetujui Syarat & Ketentuan'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -66,9 +75,47 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email sudah terdaftar')),
+            const SnackBar(
+              content: Text('Registrasi gagal. Silakan coba kembali.'),
+              backgroundColor: Colors.redAccent,
+            ),
           );
         }
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Registrasi gagal';
+      
+      // Penerjemahan Kode Error Registrasi Firebase Auth ke Bahasa Indonesia
+      if (e.code == 'weak-password') {
+        message = 'Kata sandi terlalu lemah (minimal 6 karakter)';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Email sudah terdaftar dan digunakan oleh akun lain';
+      } else if (e.code == 'invalid-email') {
+        message = 'Format email tidak valid';
+      } else if (e.code == 'network-request-failed') {
+        message = 'Koneksi jaringan gagal. Periksa kembali sambungan internet Anda.';
+      } else if (e.code == 'operation-not-allowed') {
+        message = 'Autentikasi Email/Password belum diaktifkan di Firebase Console';
+      } else if (e.message != null) {
+        message = e.message!;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -80,7 +127,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FBFB), // Light teal tinted background
+      backgroundColor: const Color(0xFFF7FBFB),
       body: SafeArea(
         child: Column(
           children: [
@@ -156,7 +203,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                       const SizedBox(height: 20),
                       _buildInputField(
-                        label: 'Confirm',
+                        label: 'Konfirmasi Kata Sandi',
                         hint: '........',
                         icon: Icons.lock_clock_outlined,
                         controller: _confirmController,
@@ -167,8 +214,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         children: [
                           Checkbox(
                             value: _isAgreed,
-                            onChanged: (val) =>
-                                setState(() => _isAgreed = val!),
+                            onChanged: (val) => setState(() => _isAgreed = val!),
                             activeColor: AppColors.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
@@ -196,17 +242,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                         child: _isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               )
-                            : Row(
+                            : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text('Daftar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                  Text('Daftar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                                   SizedBox(width: 12),
-                                  Icon(Icons.arrow_forward),
+                                  Icon(Icons.arrow_forward, color: Colors.white),
                                 ],
                               ),
                       ),
@@ -215,7 +261,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         child: GestureDetector(
                           onTap: () => context.pop(),
                           child: RichText(
-                            text: TextSpan(
+                            text: const TextSpan(
                               text: 'Sudah punya akun? ',
                               style: TextStyle(color: Colors.black54),
                               children: [

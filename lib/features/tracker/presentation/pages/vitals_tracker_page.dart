@@ -16,26 +16,39 @@ class VitalsTrackerPage extends ConsumerStatefulWidget {
 }
 
 class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
-  final TextEditingController _heightController = TextEditingController(text: '170');
-  final TextEditingController _weightController = TextEditingController(text: '65.5');
-  final TextEditingController _heartRateController = TextEditingController(text: '72');
-  final TextEditingController _oxygenController = TextEditingController(text: '98');
-  final TextEditingController _stepsController = TextEditingController(text: '8000');
+  final TextEditingController _heightController = TextEditingController(
+    text: '170',
+  );
+  final TextEditingController _weightController = TextEditingController(
+    text: '65.5',
+  );
+  final TextEditingController _heartRateController = TextEditingController(
+    text: '72',
+  );
+  final TextEditingController _oxygenController = TextEditingController(
+    text: '98',
+  );
+  final TextEditingController _stepsController = TextEditingController(
+    text: '8000',
+  );
 
   // Live BMI calculation
   double? _bmi;
   String _bmiCategory = '';
 
   void _recalculateBMI() {
-    final w = double.tryParse(_weightController.text);
-    final h = int.tryParse(_heightController.text);
+    final w = double.tryParse(_weightController.text.trim());
+    final h = int.tryParse(_heightController.text.trim());
     if (w != null && h != null && h > 0 && w > 0) {
       setState(() {
         _bmi = HealthRepository.calculateBMI(w, h);
         _bmiCategory = _bmi != null ? HealthRepository.bmiCategory(_bmi!) : '';
       });
     } else {
-      setState(() { _bmi = null; _bmiCategory = ''; });
+      setState(() {
+        _bmi = null;
+        _bmiCategory = '';
+      });
     }
   }
 
@@ -55,7 +68,7 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
   @override
   void initState() {
     super.initState();
-    // Prefill with latest vital data if it exists
+    // Prefill dengan data vitalitas terbaru jika tersedia di lokal lokal
     final latest = ref.read(healthRepositoryProvider).getLatestVitals();
     if (latest != null) {
       _weightController.text = latest.weight.toString();
@@ -68,9 +81,10 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
         _oxygenController.text = latest.oxygen.toString();
       }
     }
-    // Recalculate BMI after prefill
+    // Kalkulasi awal BMI setelah proses prefill selesai
     _recalculateBMI();
-    // Listen for live updates
+
+    // Pasang listener untuk kalkulasi BMI secara realtime saat mengetik
     _heightController.addListener(_recalculateBMI);
     _weightController.addListener(_recalculateBMI);
   }
@@ -90,22 +104,90 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
   String _getFormattedDate() {
     final now = DateTime.now();
     final months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${now.day} ${months[now.month - 1]} ${now.year}';
   }
 
+  void _showWarningSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Validasi Input Vitalitas Kesehatan Sebelum Data Disimpan secara Permanen
   Future<void> _saveVitals() async {
+    // 1. Parsing input teks ke bentuk numerik secara aman
+    final int? height = int.tryParse(_heightController.text.trim());
+    final double? weight = double.tryParse(_weightController.text.trim());
+    final int? heartRate = int.tryParse(_heartRateController.text.trim());
+    final int? oxygen = int.tryParse(_oxygenController.text.trim());
+    final int? steps = int.tryParse(_stepsController.text.trim());
+
+    // 2. Validasi format angka / kolom kosong
+    if (height == null ||
+        weight == null ||
+        heartRate == null ||
+        oxygen == null ||
+        steps == null) {
+      _showWarningSnackBar(
+        'Semua kolom data kesehatan harus diisi dengan angka yang valid!',
+      );
+      return;
+    }
+
+    // 3. Validasi Nilai Positif dan Rentang Batas Logis (> 0)
+    if (height <= 0) {
+      _showWarningSnackBar('Tinggi badan harus lebih besar dari 0 cm!');
+      return;
+    }
+    if (weight <= 0) {
+      _showWarningSnackBar('Berat badan harus lebih besar dari 0 kg!');
+      return;
+    }
+    if (heartRate <= 0) {
+      _showWarningSnackBar('Detak jantung harus lebih besar dari 0 BPM!');
+      return;
+    }
+    if (oxygen <= 0) {
+      _showWarningSnackBar('Kadar oksigen harus lebih besar dari 0%!');
+      return;
+    }
+    if (oxygen > 100) {
+      _showWarningSnackBar('Kadar oksigen (SpO2) tidak boleh melebihi 100%!');
+      return;
+    }
+    if (steps < 0) {
+      _showWarningSnackBar(
+        'Jumlah langkah harian tidak boleh bernilai negatif!',
+      );
+      return;
+    }
+
+    // 4. Jika seluruh validasi lolos, lakukan penyimpanan data ke repositori
     final repository = ref.read(healthRepositoryProvider);
-    
     final record = VitalsRecord(
       date: DateTime.now(),
-      heartRate: int.tryParse(_heartRateController.text) ?? 72,
-      steps: int.tryParse(_stepsController.text) ?? 8000,
-      weight: double.tryParse(_weightController.text) ?? 65.5,
-      height: int.tryParse(_heightController.text) ?? 170,
-      oxygen: int.tryParse(_oxygenController.text) ?? 98,
+      heartRate: heartRate,
+      steps: steps,
+      weight: weight,
+      height: height,
+      oxygen: oxygen,
     );
 
     await repository.updateVitals(record);
@@ -177,16 +259,27 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                             children: [
                               const Text(
                                 'Catat Data Kesehatan',
-                                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.black38),
+                                  const Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 12,
+                                    color: Colors.black38,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Hari ini, ${_getFormattedDate()}',
-                                    style: const TextStyle(color: Colors.black38, fontSize: 12, fontWeight: FontWeight.w500),
+                                    style: const TextStyle(
+                                      color: Colors.black38,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -201,7 +294,7 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                       style: TextStyle(color: Colors.black54, height: 1.5),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Body Stats Row
                     Row(
                       children: [
@@ -210,29 +303,30 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                         _buildWeightCard(),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // BMI Preview Card
                     _buildBMIPreviewCard(),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Heart Rate Card
                     _buildHeartRateCard(),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Oxygen Card
                     _buildOxygenCard(),
-                    
+
                     const SizedBox(height: 24),
- 
+
                     // Steps Card
                     _buildStepsCard(),
-                    
+
                     const SizedBox(height: 40),
-                    
+
+                    // Tombol Aksi Simpan
                     Container(
                       width: double.infinity,
                       height: 56,
@@ -256,14 +350,27 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Simpan Data Kesehatan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text(
+                              'Simpan Data Kesehatan',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                             SizedBox(width: 8),
-                            Icon(Icons.check_circle_outline, size: 20, color: Colors.white),
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 20,
+                              color: Colors.white,
+                            ),
                           ],
                         ),
                       ),
@@ -272,7 +379,10 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                     Center(
                       child: TextButton(
                         onPressed: () => context.pop(),
-                        child: const Text('Batal', style: TextStyle(color: Colors.black38)),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(color: Colors.black38),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -307,9 +417,13 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
-        child: Row(
-          children: const [
-            Icon(Icons.monitor_weight_outlined, color: Colors.black26, size: 20),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.monitor_weight_outlined,
+              color: Colors.black26,
+              size: 20,
+            ),
             SizedBox(width: 12),
             Text(
               'Isi tinggi & berat badan untuk melihat BMI',
@@ -363,7 +477,12 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               children: [
                 const Text(
                   'INDEKS MASSA TUBUH (BMI)',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black45, letterSpacing: 0.5),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black45,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -372,12 +491,20 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                   children: [
                     Text(
                       _bmi!.toStringAsFixed(1),
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: bmiColor),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: bmiColor,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '— $_bmiCategory',
-                      style: TextStyle(fontSize: 13, color: bmiColor, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: bmiColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -403,9 +530,20 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.height_rounded, color: Colors.indigo, size: 18),
+                const Icon(
+                  Icons.height_rounded,
+                  color: Colors.indigo,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
-                Text('TINGGI BADAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo.shade800)),
+                Text(
+                  'TINGGI BADAN',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo.shade800,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -415,7 +553,11 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.indigo.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2)),
+                  BoxShadow(
+                    color: Colors.indigo.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
               child: Row(
@@ -426,11 +568,25 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                     child: TextField(
                       controller: _heightController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-                      decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
                     ),
                   ),
-                  const Text('cm', style: TextStyle(fontSize: 14, color: Colors.black38, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'cm',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black38,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -454,9 +610,20 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.monitor_weight_outlined, color: AppColors.primary, size: 18),
+                Icon(
+                  Icons.monitor_weight_outlined,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
-                Text('BERAT BADAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary.withValues(alpha: 0.8))),
+                Text(
+                  'BERAT BADAN',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -466,7 +633,11 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2)),
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
               child: Row(
@@ -477,11 +648,25 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                     child: TextField(
                       controller: _weightController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-                      decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
                     ),
                   ),
-                  const Text('kg', style: TextStyle(fontSize: 14, color: Colors.black38, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'kg',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black38,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -507,9 +692,20 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 20),
+                    const Icon(
+                      Icons.favorite_rounded,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
-                    Text('DETAK JANTUNG', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red.shade800)),
+                    Text(
+                      'DETAK JANTUNG',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade800,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -519,7 +715,10 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -530,12 +729,25 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                         child: TextField(
                           controller: _heartRateController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('BPM', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                      const Text(
+                        'BPM',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -553,10 +765,18 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.redAccent.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: Colors.redAccent.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 48),
+            child: const Icon(
+              Icons.favorite_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
           ),
         ],
       ),
@@ -581,7 +801,14 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                   children: [
                     const Icon(Icons.air, color: Colors.blue, size: 20),
                     const SizedBox(width: 8),
-                    Text('KADAR OKSIGEN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+                    Text(
+                      'KADAR OKSIGEN',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -591,7 +818,10 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -602,12 +832,25 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                         child: TextField(
                           controller: _oxygenController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('% SpO2', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      const Text(
+                        '% SpO2',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -625,10 +868,18 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.blue.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-            child: const Icon(Icons.bubble_chart_rounded, color: Colors.white, size: 48),
+            child: const Icon(
+              Icons.bubble_chart_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
           ),
         ],
       ),
@@ -651,19 +902,33 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.directions_walk_rounded, color: Colors.orange, size: 20),
+                    const Icon(
+                      Icons.directions_walk_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
-                    Text('LANGKAH HARIAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
+                    Text(
+                      'LANGKAH HARIAN',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.shade800,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Aktif bergerak menjaga kesehatan jantung dan metabolisme tubuh.',
+                  'Aktivitas bergerak menjaga kesehatan jantung dan metabolisme tubuh.',
                   style: TextStyle(color: Colors.black45, fontSize: 12),
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -674,12 +939,25 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
                         child: TextField(
                           controller: _stepsController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('langkah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      const Text(
+                        'langkah',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -697,10 +975,18 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.orange.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(
+                  color: Colors.orange.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-            child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 48),
+            child: const Icon(
+              Icons.directions_run_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
           ),
         ],
       ),

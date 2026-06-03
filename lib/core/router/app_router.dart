@@ -1,6 +1,4 @@
 import 'package:go_router/go_router.dart';
-
-// TODO: Import the actual pages once created
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -79,9 +77,12 @@ class AppRouter {
         path: '/doctor_profile',
         builder: (context, state) {
           final name = state.uri.queryParameters['name'] ?? 'Dr. Sarah Wijaya';
-          final spec = state.uri.queryParameters['spec'] ?? 'Spesialis Gizi Klinik';
+          final spec =
+              state.uri.queryParameters['spec'] ?? 'Spesialis Gizi Klinik';
           final exp = state.uri.queryParameters['exp'] ?? '8 Thn';
-          final img = state.uri.queryParameters['img'] ?? 'https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=200';
+          final img =
+              state.uri.queryParameters['img'] ??
+              'https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=200';
           final phone = state.uri.queryParameters['phone'] ?? '6285176914026';
           return DoctorProfilePage(
             name: name,

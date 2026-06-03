@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/hive_models.dart';
+import 'package:flutter/foundation.dart';
 
 final healthRepositoryProvider = Provider((ref) => HealthRepository());
 
@@ -19,16 +21,15 @@ class HealthRepository {
     await _userBox.put('current_user', user);
     await _userBox.flush();
 
-    // Sync profile to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .set({
-          'name': user.name,
-          'email': user.email,
-          'profilePic': user.profilePic,
-        }, SetOptions(merge: true));
+    // Sync profile to Firestore (menggunakan UID sebagai document key)
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'name': user.name,
+        'email': user.email,
+        'profilePic': user.profilePic,
+      }, SetOptions(merge: true));
+    }
   }
 
   UserModel? getUser() {
@@ -41,17 +42,19 @@ class HealthRepository {
     await _moodBox.flush();
 
     // Sync to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .collection('moods')
-        .doc(record.date.toIso8601String())
-        .set({
-          'date': record.date.toIso8601String(),
-          'mood': record.mood,
-          'note': record.note,
-        });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('moods')
+          .doc(record.date.toIso8601String())
+          .set({
+            'date': record.date.toIso8601String(),
+            'mood': record.mood,
+            'note': record.note,
+          });
+    }
   }
 
   List<MoodRecord> getAllMoods() {
@@ -73,18 +76,20 @@ class HealthRepository {
     await _sleepBox.flush();
 
     // Sync to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .collection('sleeps')
-        .doc(record.date.toIso8601String())
-        .set({
-          'date': record.date.toIso8601String(),
-          'hours': record.hours,
-          'quality': record.quality,
-          'isRefreshed': record.isRefreshed,
-        });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sleeps')
+          .doc(record.date.toIso8601String())
+          .set({
+            'date': record.date.toIso8601String(),
+            'hours': record.hours,
+            'quality': record.quality,
+            'isRefreshed': record.isRefreshed,
+          });
+    }
   }
 
   List<SleepRecord> getAllSleep() {
@@ -106,20 +111,22 @@ class HealthRepository {
     await _vitalsBox.flush();
 
     // Sync to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .collection('vitals')
-        .doc(record.date.toIso8601String())
-        .set({
-          'date': record.date.toIso8601String(),
-          'heartRate': record.heartRate,
-          'steps': record.steps,
-          'weight': record.weight,
-          'height': record.height,
-          'oxygen': record.oxygen,
-        });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('vitals')
+          .doc(record.date.toIso8601String())
+          .set({
+            'date': record.date.toIso8601String(),
+            'heartRate': record.heartRate,
+            'steps': record.steps,
+            'weight': record.weight,
+            'height': record.height,
+            'oxygen': record.oxygen,
+          });
+    }
   }
 
   VitalsRecord? getLatestVitals() {
@@ -142,29 +149,34 @@ class HealthRepository {
     await _nutritionBox.flush();
 
     // Sync to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .collection('nutrition')
-        .doc(record.date.toIso8601String())
-        .set({
-          'date': record.date.toIso8601String(),
-          'calories': record.calories,
-          'mealType': record.mealType,
-          'protein': record.protein,
-          'carbs': record.carbs,
-          'fat': record.fat,
-          'selectedFoods': record.selectedFoods,
-        });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('nutrition')
+          .doc(record.date.toIso8601String())
+          .set({
+            'date': record.date.toIso8601String(),
+            'calories': record.calories,
+            'mealType': record.mealType,
+            'protein': record.protein,
+            'carbs': record.carbs,
+            'fat': record.fat,
+            'selectedFoods': record.selectedFoods,
+          });
+    }
   }
 
   List<NutritionRecord> getDailyNutrition(DateTime date) {
-    return _nutritionBox.values.where((rec) =>
-      rec.date.year == date.year &&
-      rec.date.month == date.month &&
-      rec.date.day == date.day
-    ).toList();
+    return _nutritionBox.values
+        .where(
+          (rec) =>
+              rec.date.year == date.year &&
+              rec.date.month == date.month &&
+              rec.date.day == date.day,
+        )
+        .toList();
   }
 
   List<NutritionRecord> getNutritionByRange(DateTime start, DateTime end) {
@@ -179,7 +191,7 @@ class HealthRepository {
   int getTotalCaloriesToday() {
     final now = DateTime.now();
     final todayRecs = getDailyNutrition(now);
-    return todayRecs.fold(0, (sum, item) => sum + item.calories);
+    return todayRecs.fold(0, (total, item) => total + item.calories);
   }
 
   // --- SYMPTOM TRACKER ---
@@ -188,16 +200,18 @@ class HealthRepository {
     await _symptomBox.flush();
 
     // Sync to Firestore
-    final email = Hive.box('settings_box').get('current_user_email') ?? 'guest_user';
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(email)
-        .collection('symptoms')
-        .doc(record.date.toIso8601String())
-        .set({
-          'date': record.date.toIso8601String(),
-          'symptoms': record.symptoms,
-        });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('symptoms')
+          .doc(record.date.toIso8601String())
+          .set({
+            'date': record.date.toIso8601String(),
+            'symptoms': record.symptoms,
+          });
+    }
   }
 
   List<SymptomRecord> getSymptomsByRange(DateTime start, DateTime end) {
@@ -224,9 +238,9 @@ class HealthRepository {
   }
 
   // --- CLOUD FIRESTORE ONLINE SYNC ---
-  Future<void> syncFromFirestore(String userEmail) async {
+  Future<void> syncFromFirestore(String userUid) async {
     final firestore = FirebaseFirestore.instance;
-    final userDocRef = firestore.collection('users').doc(userEmail);
+    final userDocRef = firestore.collection('users').doc(userUid);
 
     try {
       // 1. Sync Profile
@@ -235,7 +249,7 @@ class HealthRepository {
         final data = userDoc.data()!;
         final user = UserModel(
           name: data['name'] ?? 'User',
-          email: userEmail,
+          email: data['email'] ?? '',
           password: '',
           profilePic: data['profilePic'],
         );
@@ -325,7 +339,7 @@ class HealthRepository {
       ]);
     } catch (e) {
       // Biarkan gagal tanpa merusak aplikasi
-      print("Firestore sync error: $e");
+      debugPrint("Firestore sync error: $e");
     }
   }
 }

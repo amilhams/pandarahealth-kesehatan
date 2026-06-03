@@ -195,26 +195,26 @@ class AccountManagementPage extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+  void _showDeleteConfirmation(BuildContext outerContext, WidgetRef ref) {
     showDialog(
-      context: context,
-      builder: (context) {
+      context: outerContext,
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Hapus Akun Permanen?'),
           content: const Text('Apakah Anda yakin ingin menghapus akun ini secara permanen? Seluruh riwayat dan data Anda akan hilang dan tidak dapat dipulihkan.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Batal', style: TextStyle(color: Colors.black54)),
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 final authRepo = ref.read(authRepositoryProvider);
                 await authRepo.deleteAccount();
                 ref.read(currentUserProvider.notifier).state = null;
-                if (context.mounted) {
-                  context.go('/welcome');
+                if (outerContext.mounted) {
+                  outerContext.go('/welcome');
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),

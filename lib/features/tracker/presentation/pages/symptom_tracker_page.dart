@@ -63,6 +63,8 @@ class _SymptomTrackerPageState extends ConsumerState<SymptomTrackerPage> {
     {'name': 'Sakit Kepala', 'icon': Icons.face_outlined},
     {'name': 'Demam', 'icon': Icons.thermostat_outlined},
     {'name': 'Batuk', 'icon': Icons.air_outlined},
+    {'name': 'Sesak Napas', 'icon': Icons.bubble_chart_outlined},
+    {'name': 'Sakit Tenggorokan', 'icon': Icons.healing_outlined},
     {'name': 'Mual', 'icon': Icons.sentiment_dissatisfied},
     {'name': 'Alergi', 'icon': Icons.spa_outlined},
     {'name': 'Kelelahan', 'icon': Icons.bed_outlined},

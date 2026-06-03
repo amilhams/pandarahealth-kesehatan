@@ -41,7 +41,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final triageWarningDismissedNotifier = ref.read(
       triageWarningDismissedProvider.notifier,
     );
-    final triageCriticalAcknowledged = ref.watch(triageCriticalAcknowledgedProvider);
+    final triageCriticalAcknowledged = ref.watch(
+      triageCriticalAcknowledgedProvider,
+    );
     final triageCriticalAcknowledgedNotifier = ref.read(
       triageCriticalAcknowledgedProvider.notifier,
     );
@@ -158,8 +160,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
               ],
             ),
-            if (triageResult.type == TriageType.critical && !triageCriticalAcknowledged)
-              _buildCriticalOverlay(triageResult, triageCriticalAcknowledgedNotifier),
+            if (triageResult.type == TriageType.critical &&
+                !triageCriticalAcknowledged)
+              _buildCriticalOverlay(
+                triageResult,
+                triageCriticalAcknowledgedNotifier,
+              ),
           ],
         ),
       ),
@@ -300,10 +306,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           const SizedBox(height: 12),
           Text(
             triageResult.description,
-            style: const TextStyle(
-              color: Color(0xFF5D4037),
-              height: 1.4,
-            ),
+            style: const TextStyle(color: Color(0xFF5D4037), height: 1.4),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -317,7 +320,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFB300),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -357,82 +363,81 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ],
         ),
         const SizedBox(height: 12),
-        ...triageResult.banners.map((banner) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: GestureDetector(
-            onTap: () => context.go('/consult?category=${banner.category}'),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFF90CAF9),
-                  width: 1,
+        ...triageResult.banners.map(
+          (banner) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: GestureDetector(
+              onTap: () => context.go('/consult?category=${banner.category}'),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF90CAF9), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1E88E5).withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1565C0),
-                      borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1565C0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.tips_and_updates_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.tips_and_updates_outlined,
-                      color: Colors.white,
-                      size: 18,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            banner.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0D47A1),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            banner.description,
+                            style: const TextStyle(
+                              color: Color(0xFF1565C0),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '${banner.actionText} →',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0D47A1),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          banner.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0D47A1),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          banner.description,
-                          style: const TextStyle(
-                            color: Color(0xFF1565C0),
-                            fontSize: 12,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '${banner.actionText} →',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0D47A1),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        )),
+        ),
       ],
     );
   }
@@ -545,7 +550,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE53935),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -562,7 +570,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFB71C1C),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -643,7 +654,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE53935),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -663,7 +677,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFB71C1C),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -759,7 +776,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   _buildVitalSubCard(
                     Icons.bedtime_outlined,
                     'Tidur',
-                    stats.sleepHours > 0 ? '${stats.sleepHours.toStringAsFixed(1)}' : '—',
+                    stats.sleepHours > 0
+                        ? stats.sleepHours.toStringAsFixed(1)
+                        : '—',
                     'jam',
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/widgets/app_bottom_nav.dart';
 
 class ChangeEmailPage extends ConsumerStatefulWidget {
@@ -14,6 +15,7 @@ class ChangeEmailPage extends ConsumerStatefulWidget {
 
 class _ChangeEmailPageState extends ConsumerState<ChangeEmailPage> {
   late TextEditingController _newEmailController;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -52,23 +54,54 @@ class _ChangeEmailPageState extends ConsumerState<ChangeEmailPage> {
       return;
     }
 
-    final success = await authRepo.updateEmail(newEmail);
-    if (success) {
-      ref.read(currentUserProvider.notifier).state = authRepo.getCurrentUser();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email berhasil diubah!'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-        context.pop();
+    setState(() => _isLoading = true);
+
+    try {
+      final success = await authRepo.updateEmail(newEmail);
+      if (success) {
+        ref.read(currentUserProvider.notifier).state = authRepo.getCurrentUser();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Email verifikasi telah dikirim ke alamat baru Anda. Silakan cek inbox dan klik tautan verifikasi untuk mengaktifkan email baru.'),
+              backgroundColor: AppColors.primary,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          context.pop();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Email sudah terdaftar pada akun lain!'), backgroundColor: Colors.redAccent),
+          );
+        }
       }
-    } else {
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Gagal memperbarui email: ${e.message ?? e.code}';
+      if (e.code == 'requires-recent-login') {
+        errorMessage = 'Sesi Anda telah berakhir demi keamanan. Silakan keluar (logout) dan masuk kembali sebelum mengubah email.';
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = 'Alamat email baru sudah digunakan oleh akun lain.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Format email baru tidak valid.';
+      } else if (e.code == 'operation-not-allowed') {
+        errorMessage = 'Operasi ini tidak diizinkan. Pastikan provider Email/Password aktif di Firebase Console.';
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email sudah terdaftar pada akun lain!'), backgroundColor: Colors.redAccent),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.redAccent),
         );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -241,21 +274,30 @@ class _ChangeEmailPageState extends ConsumerState<ChangeEmailPage> {
 
   Widget _buildActionButton() {
     return ElevatedButton(
-      onPressed: _changeEmail,
+      onPressed: _isLoading ? null : _changeEmail,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 0,
       ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          SizedBox(width: 8),
-          Icon(Icons.arrow_forward, size: 18),
-        ],
-      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, size: 18),
+              ],
+            ),
     );
   }
 }

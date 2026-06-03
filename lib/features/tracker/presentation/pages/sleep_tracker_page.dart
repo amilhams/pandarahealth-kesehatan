@@ -19,7 +19,7 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   String _selectedQuality = 'Cukup';
-  bool _isRefreshed = true;
+  final bool _isRefreshed = true;
 
   ImageProvider _getProfileImage(String? profilePic) {
     if (profilePic != null && profilePic.isNotEmpty) {
@@ -44,7 +44,7 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
   double _calculateDuration() {
     double start = _startTime.hour + (_startTime.minute / 60.0);
     double end = _endTime.hour + (_endTime.minute / 60.0);
-    
+
     if (end < start) {
       return (24.0 - start) + end;
     }
@@ -59,10 +59,24 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
     {'label': 'Nyenyak', 'icon': Icons.sentiment_very_satisfied_outlined},
   ];
 
+  // Perbaikan Modul Validasi Input Durasi Tidur sebelum data disimpan
   Future<void> _saveSleep() async {
     final repository = ref.read(healthRepositoryProvider);
     final duration = _calculateDuration();
-    
+
+    // Validasi: Durasi tidur wajib lebih besar dari 0 jam
+    if (duration <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Durasi tidur harus lebih besar dari 0 jam! Silakan periksa kembali jam tidur dan bangun Anda.',
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     final record = SleepRecord(
       date: DateTime.now(),
       hours: duration,
@@ -140,11 +154,16 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
                               Text.rich(
                                 TextSpan(
                                   text: 'Bagaimana ',
-                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   children: [
                                     TextSpan(
                                       text: 'istirahat',
-                                      style: TextStyle(color: AppColors.primary),
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                      ),
                                     ),
                                     TextSpan(text: ' kamu hari ini?'),
                                   ],
@@ -161,15 +180,15 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
                       style: TextStyle(color: Colors.black54, height: 1.5),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Duration Card
                     _buildDurationCard(),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Quality Card
                     _buildQualityCard(),
-                    
+
                     const SizedBox(height: 24),
 
                     const SizedBox(height: 40),
@@ -178,12 +197,20 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Simpan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Simpan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           SizedBox(width: 8),
                           Icon(Icons.check_circle, size: 20),
                         ],
@@ -193,7 +220,10 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
                     Center(
                       child: TextButton(
                         onPressed: () => context.pop(),
-                        child: const Text('Batal', style: TextStyle(color: Colors.black38)),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(color: Colors.black38),
+                        ),
                       ),
                     ),
                   ],
@@ -219,19 +249,34 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
         children: [
-          const Text('Kapan Anda tidur & bangun?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Kapan Anda tidur & bangun?',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildTimePicker('MULAI TIDUR', _startTime, (time) => setState(() => _startTime = time)),
+              _buildTimePicker(
+                'MULAI TIDUR',
+                _startTime,
+                (time) => setState(() => _startTime = time),
+              ),
               const Icon(Icons.arrow_forward, color: Colors.black12, size: 24),
-              _buildTimePicker('BANGUN TIDUR', _endTime, (time) => setState(() => _endTime = time)),
+              _buildTimePicker(
+                'BANGUN TIDUR',
+                _endTime,
+                (time) => setState(() => _endTime = time),
+              ),
             ],
           ),
           const SizedBox(height: 32),
@@ -244,11 +289,18 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.nightlight_round, color: AppColors.primary, size: 18),
+                const Icon(
+                  Icons.nightlight_round,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  'Durasi Tidur: $dHours j $dMinutes m', 
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)
+                  'Durasi Tidur: $dHours j $dMinutes m',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -258,22 +310,38 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
     );
   }
 
-  Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onSelected) {
+  Widget _buildTimePicker(
+    String label,
+    TimeOfDay time,
+    Function(TimeOfDay) onSelected,
+  ) {
     final String hour = time.hour.toString().padLeft(2, '0');
     final String minute = time.minute.toString().padLeft(2, '0');
 
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.black26, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.black26,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 12),
         InkWell(
           onTap: () async {
             final picked = await showTimePicker(
-              context: context, 
+              context: context,
               initialTime: time,
+              // Memaksa dialog input jam langsung memunculkan soft keyboard angka text-field
+              initialEntryMode: TimePickerEntryMode.input,
               builder: (context, child) {
                 return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(alwaysUse24HourFormat: true),
                   child: child!,
                 );
               },
@@ -288,7 +356,11 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
             ),
             child: Text(
               '$hour:$minute',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ),
@@ -304,7 +376,11 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
@@ -313,7 +389,10 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Kualitas Tidur', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                'Kualitas Tidur',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Icon(Icons.star, color: AppColors.primary, size: 24),
             ],
           ),
@@ -326,21 +405,34 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
                 onTap: () => setState(() => _selectedQuality = q['label']!),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : Colors.transparent,
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.05)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
-                      Icon(q['icon'] as IconData, color: isSelected ? AppColors.primary : Colors.black26, size: 28),
+                      Icon(
+                        q['icon'] as IconData,
+                        color: isSelected ? AppColors.primary : Colors.black26,
+                        size: 28,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         q['label']!,
                         style: TextStyle(
-                          color: isSelected ? AppColors.primary : Colors.black26,
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.black26,
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ],
@@ -353,6 +445,4 @@ class _SleepTrackerPageState extends ConsumerState<SleepTrackerPage> {
       ),
     );
   }
-
-
 }

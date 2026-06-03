@@ -3,7 +3,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/data/models/hive_models.dart';
 import '../../../../core/data/repositories/health_repository.dart';
 
-enum TriageType { critical, warning, habits, safe }
+// Penambahan tipe 'empty' untuk menangani kondisi data kosong / pengguna baru
+enum TriageType { critical, warning, habits, safe, empty }
 
 class TriageBanner {
   final String title;
@@ -167,6 +168,22 @@ final triageResultProvider = Provider<TriageResult>((ref) {
   // Nutrition
   final todayNutrition = repository.getDailyNutrition(now);
 
+  // ==========================================================================
+  // KONDISI PENGAMAN (GUARD CLAUSE): PROTEKSI USER BARU / DATA KOSONG HARI INI
+  // ==========================================================================
+  if (todayVitals == null &&
+      todayMood == null &&
+      todaySleep == null &&
+      todaySymptom == null &&
+      todayNutrition.isEmpty) {
+    return TriageResult(
+      type: TriageType.empty,
+      title: 'Belum Ada Data Hari Ini',
+      description:
+          'Silakan isi data kesehatan Anda hari ini melalui menu Tracker untuk melihat analisis triase kesehatan.',
+    );
+  }
+
   // ==========================================
   // LAPIS 1: PENGECEKAN KRITIS (RED FLAG)
   // ==========================================
@@ -193,15 +210,15 @@ final triageResultProvider = Provider<TriageResult>((ref) {
     }
   }
 
-  // Cek Skala Keparahan Gejala >= 8
+  // Cek Skala Keparahan Gejala > 8 (Skala 9 dan 10 memicu Lapis 1)
   if (todaySymptom != null && todaySymptom.symptoms.isNotEmpty) {
     final maxSeverity = todaySymptom.symptoms.values.fold<double>(
       0,
       (max, val) => val > max ? val : max,
     );
-    if (maxSeverity >= 8.0) {
+    if (maxSeverity > 8.0) {
       final severeSymptoms = todaySymptom.symptoms.entries
-          .where((e) => e.value >= 8.0)
+          .where((e) => e.value > 8.0)
           .map((e) => e.key)
           .join(', ');
       return TriageResult(
@@ -221,14 +238,24 @@ final triageResultProvider = Provider<TriageResult>((ref) {
   int pointsMentalTidur = 0;
   int pointsUmum = 0;
 
-  // Evaluasi Gejala Paru
+  // Evaluasi Gejala Paru (Pulmonologi)
   if (todaySymptom != null) {
-    if (todaySymptom.symptoms.containsKey('Batuk')) {
-      pointsPulmonologi += 15;
+    final pulmonologiSymptoms = todaySymptom.symptoms.entries.where(
+      (e) =>
+          e.key == 'Batuk' ||
+          e.key == 'Sesak Napas' ||
+          e.key == 'Sakit Tenggorokan',
+    );
+    if (pulmonologiSymptoms.isNotEmpty) {
+      pointsPulmonologi += pulmonologiSymptoms.length * 15;
+      final maxPulmoSeverity = pulmonologiSymptoms
+          .map((e) => e.value)
+          .reduce((a, b) => a > b ? a : b);
+      pointsPulmonologi += (maxPulmoSeverity * 5).round();
     }
   }
 
-  // Evaluasi Mood & Tidur
+  // Evaluasi Mood & Tidur (MentalTidur)
   if (todayMood != null) {
     if (todayMood.mood == 'Sad' || todayMood.mood == 'Angry') {
       pointsMentalTidur += 20;
@@ -242,26 +269,44 @@ final triageResultProvider = Provider<TriageResult>((ref) {
       pointsMentalTidur += 25;
     }
   }
+  if (todaySymptom != null && todaySymptom.symptoms.containsKey('Kelelahan')) {
+    final fatigueSeverity = todaySymptom.symptoms['Kelelahan'] ?? 0.0;
+    pointsMentalTidur += 15 + (fatigueSeverity * 5).round();
+  }
 
   // Evaluasi Penyakit Dalam / Umum
-  if (todaySymptom != null && todaySymptom.symptoms.isNotEmpty) {
-    // Filter gejala umum (semua gejala selain Batuk)
+  if (todaySymptom != null) {
+    // Filter gejala umum (semua gejala selain pulmonologi & kelelahan)
     final umumSymptoms = todaySymptom.symptoms.entries.where(
-      (e) => e.key != 'Batuk',
+      (e) =>
+          e.key != 'Batuk' &&
+          e.key != 'Sesak Napas' &&
+          e.key != 'Sakit Tenggorokan' &&
+          e.key != 'Kelelahan',
     );
-    pointsUmum += umumSymptoms.length * 15;
-
-    // Tambah (Skala Keparahan Maksimum x 5)
-    final maxSeverity = todaySymptom.symptoms.values.fold<double>(
-      0,
-      (max, val) => val > max ? val : max,
-    );
-    pointsUmum += (maxSeverity * 5).round();
+    if (umumSymptoms.isNotEmpty) {
+      pointsUmum += umumSymptoms.length * 15;
+      final maxUmumSeverity = umumSymptoms
+          .map((e) => e.value)
+          .reduce((a, b) => a > b ? a : b);
+      pointsUmum += (maxUmumSeverity * 5).round();
+    }
   }
 
   final int totalPoints = pointsPulmonologi + pointsMentalTidur + pointsUmum;
 
-  if (totalPoints >= 100) {
+  // Ambil keparahan gejala maksimal untuk memicu Lapis 2 secara otomatis jika di rentang 6-8
+  double maxSymptomSeverityForLapis2 = 0.0;
+  if (todaySymptom != null && todaySymptom.symptoms.isNotEmpty) {
+    maxSymptomSeverityForLapis2 = todaySymptom.symptoms.values.fold<double>(
+      0,
+      (max, val) => val > max ? val : max,
+    );
+  }
+
+  if (totalPoints >= 100 ||
+      (maxSymptomSeverityForLapis2 >= 6.0 &&
+          maxSymptomSeverityForLapis2 <= 8.0)) {
     // Tentukan dominansi
     String recommendedSpec = 'Umum';
     String descText = '';
@@ -309,18 +354,34 @@ final triageResultProvider = Provider<TriageResult>((ref) {
   final loggedMealTypes = todayNutrition.map((rec) => rec.mealType).toSet();
 
   // Batas jam & cek log
-  if (currentHour >= 10 && !loggedMealTypes.contains('Sarapan')) missedMeals++;
-  if (currentHour >= 14 && !loggedMealTypes.contains('Makan Siang'))
-    missedMeals++;
-  if (currentHour >= 20 && !loggedMealTypes.contains('Makan Malam'))
-    missedMeals++;
-
-  if (missedMeals >= 2) {
+  if (currentHour >= 10 && !loggedMealTypes.contains('Sarapan')) {
     habitsBanners.add(
       TriageBanner(
         title: 'Perbaiki Pola Makan',
         description:
-            'Jangan telat makan ya! Sistem mendeteksi kamu melewatkan beberapa jam makan hari ini.',
+            'Jangan telat makan ya! Sistem mendeteksi kamu melewatkan jam makan Sarapan.',
+        category: 'Gizi',
+        actionText: 'Tanya Ahli Gizi',
+      ),
+    );
+  }
+  if (currentHour >= 14 && !loggedMealTypes.contains('Makan Siang')) {
+    habitsBanners.add(
+      TriageBanner(
+        title: 'Perbaiki Pola Makan',
+        description:
+            'Jangan telat makan ya! Sistem mendeteksi kamu melewatkan jam makan Siang.',
+        category: 'Gizi',
+        actionText: 'Tanya Ahli Gizi',
+      ),
+    );
+  }
+  if (currentHour >= 20 && !loggedMealTypes.contains('Makan Malam')) {
+    habitsBanners.add(
+      TriageBanner(
+        title: 'Perbaiki Pola Makan',
+        description:
+            'Jangan telat makan ya! Sistem mendeteksi kamu melewatkan jam makan Malam.',
         category: 'Gizi',
         actionText: 'Tanya Ahli Gizi',
       ),
