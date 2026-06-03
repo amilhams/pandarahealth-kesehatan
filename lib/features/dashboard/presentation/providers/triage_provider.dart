@@ -347,7 +347,6 @@ final triageResultProvider = Provider<TriageResult>((ref) {
   final List<TriageBanner> habitsBanners = [];
 
   // A. Cek Nutrisi (Telat makan)
-  int missedMeals = 0;
   final currentHour = now.hour;
 
   // Definisikan tipe makan yang terinput hari ini
