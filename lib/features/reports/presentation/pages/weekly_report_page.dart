@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,11 +145,7 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
                   ),
                   GestureDetector(
                     onTap: () => context.go('/profile'),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: _getProfileImage(user?.profilePic),
-                      backgroundColor: AppColors.primary,
-                    ),
+                    child: AppAvatar(radius: 20, profilePic: user?.profilePic),
                   ),
                 ],
               ),
@@ -852,6 +849,9 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
         ? 0
         : records.fold(0, (s, n) => s + n.carbs);
     final totalFat = records.isEmpty ? 0 : records.fold(0, (s, n) => s + n.fat);
+    final totalWater = records.isEmpty
+        ? 0
+        : records.fold(0, (s, n) => s + (n.water ?? 0));
 
     String summary;
     if (records.isEmpty) {
@@ -897,11 +897,13 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
         const SizedBox(height: 14),
         Row(
           children: [
-            _macroChip('Protein', totalProt, Colors.redAccent),
+            _macroChip('Protein', totalProt, Colors.redAccent, 'g'),
             const SizedBox(width: 8),
-            _macroChip('Karbo', totalCarb, Colors.orange),
+            _macroChip('Karbo', totalCarb, Colors.orange, 'g'),
             const SizedBox(width: 8),
-            _macroChip('Lemak', totalFat, Colors.blueAccent),
+            _macroChip('Lemak', totalFat, Colors.blueAccent, 'g'),
+            const SizedBox(width: 8),
+            _macroChip('Air', totalWater, const Color(0xFF29B6F6), 'ml'),
           ],
         ),
         const SizedBox(height: 14),
@@ -930,7 +932,7 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
     );
   }
 
-  Widget _macroChip(String label, int value, Color color) {
+  Widget _macroChip(String label, int value, Color color, [String unit = 'g']) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -941,12 +943,14 @@ class _WeeklyReportPageState extends ConsumerState<WeeklyReportPage> {
         child: Column(
           children: [
             Text(
-              '${value}g',
+              '$value$unit',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: color,
-                fontSize: 14,
+                fontSize: 13,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               label,

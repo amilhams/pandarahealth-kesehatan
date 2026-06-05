@@ -7,6 +7,7 @@ class FoodItem {
   final int protein;
   final int carbs;
   final int fat;
+  final int water; // in ml
   final String serving;
 
   FoodItem({
@@ -16,6 +17,7 @@ class FoodItem {
     required this.protein,
     required this.carbs,
     required this.fat,
+    this.water = 0,
     required this.serving,
   });
 
@@ -27,6 +29,7 @@ class FoodItem {
       'protein': protein,
       'carbs': carbs,
       'fat': fat,
+      'water': water,
       'serving': serving,
     };
   }
@@ -39,6 +42,7 @@ class FoodItem {
       protein: map['protein'] ?? 0,
       carbs: map['carbs'] ?? 0,
       fat: map['fat'] ?? 0,
+      water: map['water'] ?? 0,
       serving: map['serving'] ?? '',
     );
   }

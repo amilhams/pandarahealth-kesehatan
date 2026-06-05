@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,16 +10,7 @@ import '../../../../core/widgets/app_bottom_nav.dart';
 class AccountManagementPage extends ConsumerWidget {
   const AccountManagementPage({super.key});
 
-  ImageProvider _getProfileImage(String? profilePic) {
-    if (profilePic != null && profilePic.isNotEmpty) {
-      if (profilePic.startsWith('http') || profilePic.startsWith('https')) {
-        return NetworkImage(profilePic);
-      } else {
-        return FileImage(File(profilePic));
-      }
-    }
-    return const NetworkImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200');
-  }
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,10 +40,7 @@ class AccountManagementPage extends ConsumerWidget {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1D1D1D)),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: _getProfileImage(user?.profilePic),
-                  ),
+                  AppAvatar(radius: 20, profilePic: user?.profilePic),
                 ],
               ),
             ),

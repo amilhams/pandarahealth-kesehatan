@@ -199,13 +199,14 @@ class NutritionRecordAdapter extends TypeAdapter<NutritionRecord> {
       carbs: fields[4] as int,
       fat: fields[5] as int,
       selectedFoods: (fields[6] as List?)?.cast<String>(),
+      water: fields[7] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, NutritionRecord obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.date)
       ..writeByte(1)
@@ -219,7 +220,9 @@ class NutritionRecordAdapter extends TypeAdapter<NutritionRecord> {
       ..writeByte(5)
       ..write(obj.fat)
       ..writeByte(6)
-      ..write(obj.selectedFoods);
+      ..write(obj.selectedFoods)
+      ..writeByte(7)
+      ..write(obj.water);
   }
 
   @override

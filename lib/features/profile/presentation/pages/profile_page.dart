@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,10 +40,7 @@ class ProfilePage extends ConsumerWidget {
                     onTap: () => context.go('/dashboard'),
                     child: Image.asset('assets/images/logo_health_fix.png', height: 32),
                   ),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: _getProfileImage(user?.profilePic),
-                  ),
+                  AppAvatar(radius: 20, profilePic: user?.profilePic),
                 ],
               ),
             ),
@@ -74,10 +72,7 @@ class ProfilePage extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(4),
           decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-          child: CircleAvatar(
-            radius: 60,
-            backgroundImage: _getProfileImage(profilePic),
-          ),
+          child: AppAvatar(radius: 60, profilePic: profilePic),
         ),
         const SizedBox(height: 24),
         Text(

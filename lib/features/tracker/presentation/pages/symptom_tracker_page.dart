@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
@@ -94,11 +95,7 @@ class _SymptomTrackerPageState extends ConsumerState<SymptomTrackerPage> {
                   ),
                   GestureDetector(
                     onTap: () => context.go('/profile'),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: _getProfileImage(user?.profilePic),
-                      backgroundColor: AppColors.primary,
-                    ),
+                    child: AppAvatar(radius: 20, profilePic: user?.profilePic),
                   ),
                 ],
               ),

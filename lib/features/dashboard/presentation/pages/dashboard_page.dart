@@ -1,14 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
 import 'package:pandara_health/features/dashboard/presentation/providers/dashboard_provider.dart';
-import '../providers/triage_provider.dart';
+import 'package:pandara_health/features/dashboard/presentation/providers/triage_provider.dart';
 import '../../../../core/widgets/app_bottom_nav.dart';
-
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
@@ -19,18 +18,7 @@ class DashboardPage extends ConsumerStatefulWidget {
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _warningDialogShown = false;
 
-  ImageProvider _getProfileImage(String? profilePic) {
-    if (profilePic != null && profilePic.isNotEmpty) {
-      if (profilePic.startsWith('http') || profilePic.startsWith('https')) {
-        return NetworkImage(profilePic);
-      } else {
-        return FileImage(File(profilePic));
-      }
-    }
-    return const NetworkImage(
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +69,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       ),
                       GestureDetector(
                         onTap: () => context.go('/profile'),
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundImage: _getProfileImage(user?.profilePic),
-                          backgroundColor: AppColors.primary,
-                        ),
+                        child: AppAvatar(radius: 20, profilePic: user?.profilePic),
                       ),
                     ],
                   ),

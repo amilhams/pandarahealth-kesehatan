@@ -105,6 +105,8 @@ class NutritionRecord extends HiveObject {
   int fat;
   @HiveField(6)
   List<String>? selectedFoods;
+  @HiveField(7)
+  int? water; // in ml
 
   NutritionRecord({
     required this.date,
@@ -114,6 +116,7 @@ class NutritionRecord extends HiveObject {
     this.carbs = 0,
     this.fat = 0,
     this.selectedFoods,
+    this.water = 0,
   });
 }
 

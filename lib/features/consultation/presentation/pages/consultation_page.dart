@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -132,11 +133,7 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
                   ),
                   GestureDetector(
                     onTap: () => context.go('/profile'),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: _getProfileImage(user?.profilePic),
-                      backgroundColor: AppColors.primary,
-                    ),
+                    child: AppAvatar(radius: 20, profilePic: user?.profilePic),
                   ),
                 ],
               ),

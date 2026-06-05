@@ -164,6 +164,7 @@ class HealthRepository {
             'carbs': record.carbs,
             'fat': record.fat,
             'selectedFoods': record.selectedFoods,
+            'water': record.water,
           });
     }
   }
@@ -298,18 +299,56 @@ class HealthRepository {
       avgSteps = '$st langkah/hari';
     }
 
-    // ── Nutrition (Kalori) ───────────────────────────────────────
+    // ── Nutrition (Gizi Lengkap) ─────────────────────────────────
     final nutrition = getNutritionByRange(start, end);
-    String avgCalories = 'Tidak ada data';
+    String nutritionReport = 'Tidak ada data';
     if (nutrition.isNotEmpty) {
       // Kelompokkan per hari lalu ambil rata-rata
-      final byDay = <String, int>{};
+      final caloriesByDay = <String, int>{};
+      final proteinByDay = <String, int>{};
+      final carbsByDay = <String, int>{};
+      final fatByDay = <String, int>{};
+      final waterByDay = <String, int>{};
+
       for (final n in nutrition) {
         final key = '${n.date.year}-${n.date.month}-${n.date.day}';
-        byDay[key] = (byDay[key] ?? 0) + n.calories;
+        caloriesByDay[key] = (caloriesByDay[key] ?? 0) + n.calories;
+        proteinByDay[key] = (proteinByDay[key] ?? 0) + n.protein;
+        carbsByDay[key] = (carbsByDay[key] ?? 0) + n.carbs;
+        fatByDay[key] = (fatByDay[key] ?? 0) + n.fat;
+        waterByDay[key] = (waterByDay[key] ?? 0) + (n.water ?? 0);
       }
-      final avg = (byDay.values.fold(0, (s, v) => s + v) / byDay.length).round();
-      avgCalories = '$avg kkal/hari';
+
+      final numDays = caloriesByDay.length;
+      final avgCal = (caloriesByDay.values.fold(0, (s, v) => s + v) / numDays).round();
+      final avgProt = (proteinByDay.values.fold(0, (s, v) => s + v) / numDays).round();
+      final avgCarbs = (carbsByDay.values.fold(0, (s, v) => s + v) / numDays).round();
+      final avgFat = (fatByDay.values.fold(0, (s, v) => s + v) / numDays).round();
+      final avgWater = (waterByDay.values.fold(0, (s, v) => s + v) / numDays).round();
+
+      nutritionReport = '$avgCal kkal/hari (P: ${avgProt}g, K: ${avgCarbs}g, L: ${avgFat}g, Air: ${avgWater}ml)';
+    }
+
+    // ── Symptoms (Gejala) ────────────────────────────────────────
+    final symptomsList = getSymptomsByRange(start, end);
+    String symptomsReport = 'Tidak ada gejala tercatat';
+    if (symptomsList.isNotEmpty) {
+      final agg = <String, List<double>>{};
+      for (final rec in symptomsList) {
+        rec.symptoms.forEach((name, sev) {
+          agg.putIfAbsent(name, () => []).add(sev);
+        });
+      }
+      final activeSymptoms = <String>[];
+      agg.forEach((name, sevs) {
+        final avg = sevs.reduce((a, b) => a + b) / sevs.length;
+        if (avg > 0) {
+          activeSymptoms.add('$name (Skala ${avg.toStringAsFixed(1)}/10)');
+        }
+      });
+      if (activeSymptoms.isNotEmpty) {
+        symptomsReport = activeSymptoms.join(', ');
+      }
     }
 
     return '''📊 RINGKASAN LAPORAN MINGGUAN SAYA ($dateRange):
@@ -317,7 +356,8 @@ class HealthRepository {
 - ❤️ Detak Jantung: Rata-rata $avgHeartRate
 - 🚶 Aktivitas: Rata-rata $avgSteps
 - 🎭 Suasana Hati Dominan: $moodStatus
-- 🍽️ Asupan Kalori: Rata-rata $avgCalories''';
+- 🍽️ Asupan Nutrisi: Rata-rata $nutritionReport
+- 🤢 Gejala Terdeteksi: $symptomsReport''';
   }
 
   // --- CLOUD FIRESTORE ONLINE SYNC ---
@@ -395,6 +435,7 @@ class HealthRepository {
           carbs: data['carbs'] as int,
           fat: data['fat'] as int,
           selectedFoods: (data['selectedFoods'] as List?)?.cast<String>(),
+          water: data['water'] as int?,
         );
         await _nutritionBox.add(record);
       }

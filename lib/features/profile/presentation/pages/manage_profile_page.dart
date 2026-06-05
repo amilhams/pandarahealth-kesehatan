@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,10 +121,7 @@ class _ManageProfilePageState extends ConsumerState<ManageProfilePage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: _getProfileImage(_profilePicPath),
-                  ),
+                  AppAvatar(radius: 20, profilePic: _profilePicPath),
                 ],
               ),
             ),
@@ -166,10 +164,7 @@ class _ManageProfilePageState extends ConsumerState<ManageProfilePage> {
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-            child: CircleAvatar(
-              radius: 70,
-              backgroundImage: _getProfileImage(_profilePicPath),
-            ),
+            child: AppAvatar(radius: 70, profilePic: _profilePicPath),
           ),
         ),
         const SizedBox(height: 16),

@@ -1,3 +1,4 @@
+import 'package:pandara_health/core/widgets/app_avatar.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -175,6 +176,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
   int get _totalCarbs =>
       _selectedFoods.fold(0, (sum, item) => sum + item.carbs);
   int get _totalFat => _selectedFoods.fold(0, (sum, item) => sum + item.fat);
+  int get _totalWater => _selectedFoods.fold(0, (sum, item) => sum + item.water);
 
   Future<void> _saveNutrition() async {
     if (_selectedFoods.isEmpty) {
@@ -196,6 +198,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
       protein: _totalProtein,
       carbs: _totalCarbs,
       fat: _totalFat,
+      water: _totalWater,
       selectedFoods: _selectedFoods.map((f) => f.toJson()).toList(),
     );
 
@@ -250,16 +253,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                     onPressed: () => context.pop(),
                     icon: const Icon(Icons.arrow_back, color: Colors.black54),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.black.withValues(alpha: 0.05),
+                      backgroundColor: Colors.black.withOpacity(0.05),
                     ),
                   ),
                   GestureDetector(
                     onTap: () => context.go('/profile'),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: _getProfileImage(user?.profilePic),
-                      backgroundColor: AppColors.primary,
-                    ),
+                    child: AppAvatar(radius: 20, profilePic: user?.profilePic),
                   ),
                 ],
               ),
@@ -362,6 +361,10 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                     _buildManualInputCard(),
                     const SizedBox(height: 28),
 
+                    // Card Input Manual Minuman
+                    _buildManualDrinkInputCard(),
+                    const SizedBox(height: 28),
+
                     // Card Makanan Terpilih
                     _buildSelectedFoodsCard(),
                     const SizedBox(height: 40),
@@ -379,7 +382,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
+                            color: AppColors.primary.withOpacity( 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -449,18 +452,18 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: 0.1) : Colors.white,
+                color: isSelected ? color.withOpacity( 0.1) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected
                       ? color
-                      : Colors.black.withValues(alpha: 0.05),
+                      : Colors.black.withOpacity( 0.05),
                   width: isSelected ? 1.5 : 1.0,
                 ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: color.withValues(alpha: 0.1),
+                          color: color.withOpacity( 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -507,7 +510,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.25),
+            color: AppColors.primary.withOpacity( 0.25),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -531,7 +534,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withOpacity( 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -580,6 +583,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
               ),
               const SizedBox(width: 12),
               _buildMacroInfo('${_totalFat}g', 'LEMAK', _totalFat / 80),
+              const SizedBox(width: 12),
+              _buildMacroInfo(
+                '${_totalWater}ml',
+                'AIR',
+                _totalWater / 2000,
+              ),
             ],
           ),
         ],
@@ -596,6 +605,8 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
         children: [
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -605,6 +616,8 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white60,
               fontSize: 10,
@@ -617,7 +630,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: clampedProgress,
-              backgroundColor: Colors.white.withValues(alpha: 0.15),
+              backgroundColor: Colors.white.withOpacity( 0.15),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
               minHeight: 5,
             ),
@@ -655,12 +668,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity( 0.05),
                     width: 1.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.015),
+                      color: Colors.black.withOpacity( 0.015),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -672,7 +685,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.06),
+                        color: AppColors.primary.withOpacity( 0.06),
                         shape: BoxShape.circle,
                       ),
                       child: Text(emoji, style: const TextStyle(fontSize: 18)),
@@ -717,12 +730,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity( 0.02),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
+        border: Border.all(color: Colors.black.withOpacity( 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +760,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withOpacity( 0.03),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -829,9 +842,9 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
             Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.015),
+                color: Colors.black.withOpacity( 0.015),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
+                border: Border.all(color: Colors.black.withOpacity( 0.03)),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
@@ -914,7 +927,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFFBFBFB),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.02)),
+              border: Border.all(color: Colors.black.withOpacity( 0.02)),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,12 +983,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity( 0.02),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
+        border: Border.all(color: Colors.black.withOpacity( 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1000,7 +1013,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Jika makanan atau minuman yang Anda konsumsi tidak ditemukan di pencarian database, silakan tambahkan data gizinya secara manual di sini.',
+            'Jika makanan yang Anda konsumsi tidak ditemukan di pencarian database, silakan tambahkan data gizinya secara manual di sini.',
             style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.5),
           ),
           const SizedBox(height: 16),
@@ -1008,14 +1021,14 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
             width: double.infinity,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: AppColors.primary.withOpacity( 0.08),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: AppColors.primary.withOpacity( 0.15),
               ),
             ),
             child: InkWell(
-              onTap: _showManualInputDialog,
+              onTap: _showManualFoodInputDialog,
               borderRadius: BorderRadius.circular(16),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1039,6 +1052,84 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
     );
   }
 
+  Widget _buildManualDrinkInputCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity( 0.02),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: Colors.black.withOpacity( 0.03)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.local_drink_rounded,
+                color: Color(0xFF0288D1),
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Input Minuman Secara Manual',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Catat asupan air putih, teh, kopi, atau minuman kustom lainnya secara manual di sini.',
+            style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0288D1).withOpacity( 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0288D1).withOpacity(0.15),
+              ),
+            ),
+            child: InkWell(
+              onTap: _showManualDrinkInputDialog,
+              borderRadius: BorderRadius.circular(16),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_rounded, color: Color(0xFF0288D1), size: 20),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tambah Minuman Kustom',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0288D1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSelectedFoodsCard() {
     return Container(
       width: double.infinity,
@@ -1048,12 +1139,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity( 0.02),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
+        border: Border.all(color: Colors.black.withOpacity( 0.03)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1071,7 +1162,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary.withValues(alpha: 0.9),
+                  color: AppColors.primary.withOpacity( 0.9),
                 ),
               ),
             ],
@@ -1086,7 +1177,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                     Icon(
                       Icons.no_meals_rounded,
                       size: 48,
-                      color: Colors.black.withValues(alpha: 0.15),
+                      color: Colors.black.withOpacity( 0.15),
                     ),
                     const SizedBox(height: 12),
                     const Text(
@@ -1110,13 +1201,14 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final food = _selectedFoods[index];
+                final isDrink = food.water > 0;
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9FBFB),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: Colors.black.withValues(alpha: 0.025),
+                      color: Colors.black.withOpacity( 0.025),
                     ),
                   ),
                   child: Row(
@@ -1125,12 +1217,12 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
+                          color: (isDrink ? const Color(0xFF0288D1) : AppColors.primary).withOpacity( 0.08),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.fastfood_rounded,
-                          color: AppColors.primary,
+                        child: Icon(
+                          isDrink ? Icons.local_drink_rounded : Icons.fastfood_rounded,
+                          color: isDrink ? const Color(0xFF0288D1) : AppColors.primary,
                           size: 18,
                         ),
                       ),
@@ -1158,22 +1250,27 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                             ),
                             const SizedBox(height: 8),
                             // Macro breakdown layout tags
-                            Row(
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
                               children: [
                                 _buildMacroTag(
                                   'P: ${food.protein}g',
                                   const Color(0xFFFF8095),
                                 ),
-                                const SizedBox(width: 6),
                                 _buildMacroTag(
                                   'K: ${food.carbs}g',
                                   const Color(0xFF80B3FF),
                                 ),
-                                const SizedBox(width: 6),
                                 _buildMacroTag(
                                   'L: ${food.fat}g',
                                   const Color(0xFFFFC080),
                                 ),
+                                if (food.water > 0)
+                                  _buildMacroTag(
+                                    'Air: ${food.water}ml',
+                                    const Color(0xFF29B6F6),
+                                  ),
                               ],
                             ),
                           ],
@@ -1209,9 +1306,9 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
         label,
@@ -1224,8 +1321,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
     );
   }
 
-  // Perbaikan Sistem Validasi Manual Input Makanan (Kalori > 0, Makro >= 0)
-  void _showManualInputDialog() {
+  void _showManualFoodInputDialog() {
     final nameController = TextEditingController();
     final calController = TextEditingController();
     final protController = TextEditingController();
@@ -1256,7 +1352,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Tambah Manual',
+                      'Tambah Makanan Kustom',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -1271,7 +1367,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildDialogField(
-                  'Nama Makanan / Minuman',
+                  'Nama Makanan',
                   nameController,
                   TextInputType.text,
                   'Contoh: Nasi Liwet',
@@ -1325,61 +1421,40 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       final name = nameController.text.trim();
-                      if (name.isEmpty || calController.text.trim().isEmpty) {
+                      final calText = calController.text.trim();
+                      if (name.isEmpty || calText.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Nama dan Kalori harus diisi!'),
+                            content: Text('Nama dan kalori tidak boleh kosong!'),
                             backgroundColor: Colors.redAccent,
                           ),
                         );
                         return;
                       }
+                      final int calories = int.tryParse(calText) ?? 0;
+                      final int protein = int.tryParse(protController.text.trim()) ?? 0;
+                      final int carbs = int.tryParse(carbController.text.trim()) ?? 0;
+                      final int fat = int.tryParse(fatController.text.trim()) ?? 0;
 
-                      // Validasi Kalori wajib positif (> 0)
-                      final calories = int.tryParse(calController.text.trim());
-                      if (calories == null || calories <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Nilai kalori wajib bernilai positif (> 0)!',
-                            ),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                        return;
-                      }
-
-                      // Validasi Makronutrisi tidak boleh negatif (>= 0)
-                      final protein =
-                          int.tryParse(protController.text.trim()) ?? 0;
-                      final carbs =
-                          int.tryParse(carbController.text.trim()) ?? 0;
-                      final fat = int.tryParse(fatController.text.trim()) ?? 0;
-
-                      if (protein < 0 || carbs < 0 || fat < 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Nilai makronutrisi (protein, karbohidrat, lemak) tidak boleh negatif (>= 0)!',
-                            ),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                        return;
-                      }
-
-                      final newItem = FoodItem(
+                      final newFood = FoodItem(
                         name: name,
                         calories: calories,
                         protein: protein,
                         carbs: carbs,
                         fat: fat,
-                        serving: '1 Porsi',
+                        water: 0,
+                        serving: 'Manual',
                       );
                       setState(() {
-                        _selectedFoods.add(newItem);
+                        _selectedFoods.add(newFood);
                       });
                       Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$name ditambahkan!'),
+                          backgroundColor: AppColors.primary,
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -1389,7 +1464,175 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                       ),
                     ),
                     child: const Text(
-                      'Tambahkan',
+                      'Tambahkan Makanan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showManualDrinkInputDialog() {
+    final nameController = TextEditingController();
+    final waterController = TextEditingController();
+    final calController = TextEditingController();
+    final protController = TextEditingController();
+    final carbController = TextEditingController();
+    final fatController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 24,
+            left: 24,
+            right: 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tambah Minuman Kustom',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.black38),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildDialogField(
+                  'Nama Minuman',
+                  nameController,
+                  TextInputType.text,
+                  'Contoh: Air Putih',
+                ),
+                _buildDialogField(
+                  'Volume Cairan (ml)',
+                  waterController,
+                  TextInputType.number,
+                  'Contoh: 250',
+                ),
+                _buildDialogField(
+                  'Kalori (kcal) - Opsional',
+                  calController,
+                  TextInputType.number,
+                  '0',
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDialogField(
+                        'Protein (g) - Opsional',
+                        protController,
+                        TextInputType.number,
+                        '0',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildDialogField(
+                        'Karbo (g) - Opsional',
+                        carbController,
+                        TextInputType.number,
+                        '0',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildDialogField(
+                        'Lemak (g) - Opsional',
+                        fatController,
+                        TextInputType.number,
+                        '0',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0288D1), Color(0xFF29B6F6)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final name = nameController.text.trim();
+                      final waterText = waterController.text.trim();
+                      if (name.isEmpty || waterText.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Nama dan volume air tidak boleh kosong!'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
+                      final int water = int.tryParse(waterText) ?? 0;
+                      final int calories = int.tryParse(calController.text.trim()) ?? 0;
+                      final int protein = int.tryParse(protController.text.trim()) ?? 0;
+                      final int carbs = int.tryParse(carbController.text.trim()) ?? 0;
+                      final int fat = int.tryParse(fatController.text.trim()) ?? 0;
+
+                      final newDrink = FoodItem(
+                        name: name,
+                        calories: calories,
+                        protein: protein,
+                        carbs: carbs,
+                        fat: fat,
+                        water: water,
+                        serving: 'Manual',
+                      );
+                      setState(() {
+                        _selectedFoods.add(newDrink);
+                      });
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$name ditambahkan!'),
+                          backgroundColor: const Color(0xFF0288D1),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tambahkan Minuman',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1429,7 +1672,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withOpacity(0.03),
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
@@ -1549,7 +1792,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color: AppColors.primary.withOpacity(0.08),
                         shape: BoxShape.circle,
                       ),
                       child: Text(
@@ -1669,10 +1912,10 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.02),
+                        color: Colors.black.withOpacity( 0.02),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.03),
+                          color: Colors.black.withOpacity( 0.03),
                         ),
                       ),
                       child: Column(
@@ -1736,7 +1979,7 @@ class _NutritionTrackerPageState extends ConsumerState<NutritionTrackerPage> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               side: BorderSide(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Colors.black.withOpacity(0.1),
                               ),
                             ),
                             child: const Text(
