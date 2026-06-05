@@ -217,16 +217,62 @@ final triageResultProvider = Provider<TriageResult>((ref) {
       (max, val) => val > max ? val : max,
     );
     if (maxSeverity > 8.0) {
-      final severeSymptoms = todaySymptom.symptoms.entries
+      final severeEntries = todaySymptom.symptoms.entries
           .where((e) => e.value > 8.0)
-          .map((e) => e.key)
-          .join(', ');
+          .toList();
+      final severeSymptoms = severeEntries.map((e) => e.key).join(', ');
+
+      // Pisahkan gejala kritis berdasarkan kelompok
+      final severePulmoEntries = severeEntries
+          .where((e) =>
+              e.key == 'Batuk' ||
+              e.key == 'Sesak Napas' ||
+              e.key == 'Sakit Tenggorokan')
+          .toList();
+      final severeUmumEntries = severeEntries
+          .where((e) =>
+              e.key != 'Batuk' &&
+              e.key != 'Sesak Napas' &&
+              e.key != 'Sakit Tenggorokan' &&
+              e.key != 'Kelelahan')
+          .toList();
+
+      // Hitung skor dominansi dengan formula yang sama seperti Lapis 2
+      int scorePulmo = 0;
+      if (severePulmoEntries.isNotEmpty) {
+        final maxPulmo = severePulmoEntries
+            .map((e) => e.value)
+            .reduce((a, b) => a > b ? a : b);
+        scorePulmo = severePulmoEntries.length * 15 + (maxPulmo * 5).round();
+      }
+
+      int scoreUmum = 0;
+      if (severeUmumEntries.isNotEmpty) {
+        final maxUmum = severeUmumEntries
+            .map((e) => e.value)
+            .reduce((a, b) => a > b ? a : b);
+        scoreUmum = severeUmumEntries.length * 15 + (maxUmum * 5).round();
+      }
+
+      // Arahkan ke kelompok dengan skor tertinggi (dominansi)
+      String criticalSpec;
+      String criticalDesc;
+
+      if (scorePulmo >= scoreUmum && scorePulmo > 0) {
+        criticalSpec = 'Paru';
+        criticalDesc =
+            'Sistem mendeteksi gejala pernapasan dengan tingkat keparahan sangat tinggi ($severeSymptoms). Segera ke IGD atau hubungi Dokter Paru.';
+      } else {
+        criticalSpec = 'Umum';
+        criticalDesc =
+            'Sistem mendeteksi gejala dengan tingkat keparahan tinggi ($severeSymptoms). Segera ke IGD atau hubungi Dokter Umum.';
+      }
+
       return TriageResult(
         type: TriageType.critical,
         title: 'Gejala Kritis Terdeteksi!',
-        description:
-            'Sistem mendeteksi gejala dengan tingkat keparahan tinggi ($severeSymptoms). Segera ke IGD atau hubungi Dokter Umum.',
-        recommendedSpecialty: 'Umum',
+        description: criticalDesc,
+        recommendedSpecialty: criticalSpec,
       );
     }
   }
@@ -307,17 +353,16 @@ final triageResultProvider = Provider<TriageResult>((ref) {
   if (totalPoints >= 100 ||
       (maxSymptomSeverityForLapis2 >= 6.0 &&
           maxSymptomSeverityForLapis2 <= 8.0)) {
-    // Tentukan dominansi
+    // Lapis 2: akumulasi poin & dominansi
+    // Tetap rekomendasi ke dokter spesialis sesuai kelompok dominan
     String recommendedSpec = 'Umum';
     String descText = '';
 
-    if (pointsMentalTidur >= pointsPulmonologi &&
-        pointsMentalTidur >= pointsUmum) {
+    if (pointsMentalTidur >= pointsPulmonologi && pointsMentalTidur >= pointsUmum) {
       recommendedSpec = 'Mental';
       descText =
           'Sistem mendeteksi tingkat kelelahan emosional dan kualitas tidur Anda sangat buruk secara akumulatif. Disarankan berkonsultasi dengan Psikolog/Psikiater.';
-    } else if (pointsPulmonologi >= pointsMentalTidur &&
-        pointsPulmonologi >= pointsUmum) {
+    } else if (pointsPulmonologi >= pointsMentalTidur && pointsPulmonologi >= pointsUmum) {
       recommendedSpec = 'Paru';
       descText =
           'Sistem mendeteksi akumulasi gejala pernapasan Anda meningkat. Disarankan berkonsultasi dengan Dokter Paru.';

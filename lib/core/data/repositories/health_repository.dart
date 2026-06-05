@@ -237,6 +237,89 @@ class HealthRepository {
     return 'Obesitas';
   }
 
+  // --- DYNAMIC WEEKLY REPORT ---
+
+  /// Menghasilkan teks ringkasan mingguan yang dinamis berdasarkan data 7 hari terakhir.
+  String generateWeeklyReportText() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(const Duration(days: 6));
+    final end = today;
+
+    // ── Date range ──────────────────────────────────────────────
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    String fmtDate(DateTime d) =>
+        '${d.day} ${months[d.month - 1]} ${d.year}';
+    final dateRange = '${fmtDate(start)} – ${fmtDate(end)}';
+
+    // ── Sleep ────────────────────────────────────────────────────
+    final sleeps = getSleepByRange(start, end);
+    String sleepQuality = 'Tidak ada data';
+    if (sleeps.isNotEmpty) {
+      final avgH = sleeps.fold(0.0, (s, r) => s + r.hours) / sleeps.length;
+      final h = avgH.floor();
+      final m = ((avgH - h) * 60).round();
+      sleepQuality = '${h}j ${m}m';
+    }
+
+    // ── Mood ─────────────────────────────────────────────────────
+    final moods = getMoodsByRange(start, end);
+    String moodStatus = 'Tidak ada data';
+    if (moods.isNotEmpty) {
+      final count = <String, int>{};
+      for (final m in moods) {
+        count[m.mood] = (count[m.mood] ?? 0) + 1;
+      }
+      final dominant = count.entries
+          .reduce((a, b) => a.value >= b.value ? a : b)
+          .key;
+      // Terjemahkan ke label Indonesia
+      const labelId = {
+        'Angry': 'Marah',
+        'Sad': 'Sedih',
+        'Neutral': 'Netral',
+        'Happy': 'Senang',
+        'Great': 'Sangat Baik',
+      };
+      moodStatus = labelId[dominant] ?? dominant;
+    }
+
+    // ── Vitals (Heart Rate & Steps) ───────────────────────────────
+    final vitals = getVitalsByRange(start, end);
+    String avgHeartRate = 'Tidak ada data';
+    String avgSteps = 'Tidak ada data';
+    if (vitals.isNotEmpty) {
+      final hr = (vitals.fold(0, (s, r) => s + r.heartRate) / vitals.length).round();
+      final st = (vitals.fold(0, (s, r) => s + r.steps) / vitals.length).round();
+      avgHeartRate = '$hr BPM';
+      avgSteps = '$st langkah/hari';
+    }
+
+    // ── Nutrition (Kalori) ───────────────────────────────────────
+    final nutrition = getNutritionByRange(start, end);
+    String avgCalories = 'Tidak ada data';
+    if (nutrition.isNotEmpty) {
+      // Kelompokkan per hari lalu ambil rata-rata
+      final byDay = <String, int>{};
+      for (final n in nutrition) {
+        final key = '${n.date.year}-${n.date.month}-${n.date.day}';
+        byDay[key] = (byDay[key] ?? 0) + n.calories;
+      }
+      final avg = (byDay.values.fold(0, (s, v) => s + v) / byDay.length).round();
+      avgCalories = '$avg kkal/hari';
+    }
+
+    return '''📊 RINGKASAN LAPORAN MINGGUAN SAYA ($dateRange):
+- 🛌 Rata-rata Tidur: $sleepQuality / malam
+- ❤️ Detak Jantung: Rata-rata $avgHeartRate
+- 🚶 Aktivitas: Rata-rata $avgSteps
+- 🎭 Suasana Hati Dominan: $moodStatus
+- 🍽️ Asupan Kalori: Rata-rata $avgCalories''';
+  }
+
   // --- CLOUD FIRESTORE ONLINE SYNC ---
   Future<void> syncFromFirestore(String userUid) async {
     final firestore = FirebaseFirestore.instance;

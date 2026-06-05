@@ -5,6 +5,7 @@ import 'package:pandara_health/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pandara_health/core/constants/weekly_report_data.dart';
+import 'package:pandara_health/core/data/repositories/health_repository.dart';
 import 'package:pandara_health/features/auth/data/repositories/auth_repository.dart';
 import '../../../../core/widgets/app_bottom_nav.dart';
 
@@ -85,7 +86,7 @@ class DoctorProfilePage extends ConsumerWidget {
                             const SizedBox(height: 24),
                             _buildAboutSection(),
                             const SizedBox(height: 32),
-                            _buildConsultationAction(context),
+                            _buildConsultationAction(context, ref),
                           ],
                         ),
                       ),
@@ -298,12 +299,13 @@ class DoctorProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildConsultationAction(BuildContext context) {
+  Widget _buildConsultationAction(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         ElevatedButton(
           onPressed: () async {
-            final String reportText = WeeklyReportData.getFormattedReportText();
+            final repo = ref.read(healthRepositoryProvider);
+            final String reportText = WeeklyReportData.getFormattedReportText(repo);
             final String message =
                 "Halo $name, saya ingin berkonsultasi mengenai kesehatan saya melalui aplikasi Pandara Health.\n\n$reportText\n\nMohon arahannya dokter, terima kasih.";
             final Uri url = Uri.parse(
