@@ -18,19 +18,19 @@ class VitalsTrackerPage extends ConsumerStatefulWidget {
 
 class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
   final TextEditingController _heightController = TextEditingController(
-    text: '170',
+    text: '0',
   );
   final TextEditingController _weightController = TextEditingController(
-    text: '65.5',
+    text: '0',
   );
   final TextEditingController _heartRateController = TextEditingController(
-    text: '72',
+    text: '0',
   );
   final TextEditingController _oxygenController = TextEditingController(
-    text: '98',
+    text: '0',
   );
   final TextEditingController _stepsController = TextEditingController(
-    text: '8000',
+    text: '0',
   );
 
   // Live BMI calculation
@@ -69,20 +69,7 @@ class _VitalsTrackerPageState extends ConsumerState<VitalsTrackerPage> {
   @override
   void initState() {
     super.initState();
-    // Prefill dengan data vitalitas terbaru jika tersedia di lokal lokal
-    final latest = ref.read(healthRepositoryProvider).getLatestVitals();
-    if (latest != null) {
-      _weightController.text = latest.weight.toString();
-      _heartRateController.text = latest.heartRate.toString();
-      _stepsController.text = latest.steps.toString();
-      if (latest.height != null) {
-        _heightController.text = latest.height.toString();
-      }
-      if (latest.oxygen != null) {
-        _oxygenController.text = latest.oxygen.toString();
-      }
-    }
-    // Kalkulasi awal BMI setelah proses prefill selesai
+    // Kalkulasi awal BMI
     _recalculateBMI();
 
     // Pasang listener untuk kalkulasi BMI secara realtime saat mengetik

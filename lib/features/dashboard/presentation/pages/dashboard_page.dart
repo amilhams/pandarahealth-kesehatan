@@ -717,7 +717,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
               Text(
-                'Ringkasan Vital',
+                'Ringkasan vital harian',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,

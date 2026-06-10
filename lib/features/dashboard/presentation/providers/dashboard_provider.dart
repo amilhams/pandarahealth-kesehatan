@@ -8,53 +8,42 @@ final dashboardStatsProvider = Provider((ref) {
   
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final start = today.subtract(const Duration(days: 6));
-  final end = today;
 
-  // Fetch range data
-  final vitals = repository.getVitalsByRange(start, end);
-  final sleeps = repository.getSleepByRange(start, end);
+  // Fetch range data only for today
+  final vitals = repository.getVitalsByRange(today, today);
+  final sleeps = repository.getSleepByRange(today, today);
   final totalCalories = repository.getTotalCaloriesToday();
 
-  // Average sleep hours over the last 7 days
-  double avgSleep = 0.0;
+  // Sum sleep hours over today
+  double totalSleep = 0.0;
   if (sleeps.isNotEmpty) {
-    avgSleep = sleeps.fold<double>(0.0, (s, r) => s + r.hours) / sleeps.length;
-  } else {
-    final allSleeps = repository.getAllSleep();
-    if (allSleeps.isNotEmpty) {
-      avgSleep = allSleeps.first.hours;
-    }
+    totalSleep = sleeps.fold<double>(0.0, (s, r) => s + r.hours);
   }
 
-  // Average vitals over the last 7 days
+  // Calculate stats for today
   int avgHR = 0;
-  int avgSteps = 0;
+  int totalSteps = 0;
   int? avgOxygen;
 
   if (vitals.isNotEmpty) {
     avgHR = (vitals.fold<int>(0, (s, r) => s + r.heartRate) / vitals.length).round();
-    avgSteps = (vitals.fold<int>(0, (s, r) => s + r.steps) / vitals.length).round();
+    totalSteps = vitals.fold<int>(0, (s, r) => s + r.steps);
     
     final oxygenList = vitals.map((v) => v.oxygen).whereType<int>();
     if (oxygenList.isNotEmpty) {
       avgOxygen = (oxygenList.fold<int>(0, (s, val) => s + val) / oxygenList.length).round();
     }
-  } else {
-    final latestVitals = repository.getLatestVitals();
-    avgHR = latestVitals?.heartRate ?? 0;
-    avgSteps = latestVitals?.steps ?? 0;
-    avgOxygen = latestVitals?.oxygen;
   }
   
+  // Weight can remain as latest weight overall to ensure BMI calculations still work
   final latestVitals = repository.getLatestVitals();
   final latestWeight = latestVitals?.weight ?? 0.0;
 
   return DashboardStats(
     calories: totalCalories,
-    steps: avgSteps,
+    steps: totalSteps,
     heartRate: avgHR,
-    sleepHours: avgSleep,
+    sleepHours: totalSleep,
     weight: latestWeight,
     oxygen: avgOxygen,
   );
